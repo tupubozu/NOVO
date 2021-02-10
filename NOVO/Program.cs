@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
 namespace NOVO
 {
@@ -41,7 +42,7 @@ namespace NOVO
 			}
 
 			if (data != null) Console.WriteLine(data);
-			
+
 			Console.WriteLine("\n------------\nEnd of program");
 			Console.ReadKey(true);
 		}

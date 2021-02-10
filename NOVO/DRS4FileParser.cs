@@ -23,58 +23,48 @@ namespace NOVO
 		static DRS4FileParser() { }
 
 
-		private async Task<DRS4Time> ParseTimeAsync(byte[] data)
+		private DRS4Time ParseTime(byte[] data)
 		{
-			DRS4Time time = new();
+			DRS4Time time = new()
+			{
+				TimeData = new()
+			};
 
 			time.BoardNumber = BitConverter.ToInt16(data, 2);
 
-			List<Task<DRS4TimeData>> taskList = new();
-			
 			for (int i = 4; i < data.Length; i += 1025 * 4)
 			{
-				
-				taskList.Add(Task.Run(() =>
+				int ii = i;
+				DRS4TimeData timeData = new();
 				{
-					int ii = i;
-					DRS4TimeData timeData = new();
-					{
-						byte[] byte_channel_num = { data[ii + 1], data[ii + 2], data[ii + 3] };
-						string channel = $"{Convert.ToChar(byte_channel_num[0])}{Convert.ToChar(byte_channel_num[1])}{Convert.ToChar(byte_channel_num[2])}";
-						timeData.ChannelNumber = Byte.Parse(channel);
-					}
+					byte[] byte_channel_num = { data[ii + 1], data[ii + 2], data[ii + 3] };
+					string channel = $"{Convert.ToChar(byte_channel_num[0])}{Convert.ToChar(byte_channel_num[1])}{Convert.ToChar(byte_channel_num[2])}";
+					timeData.ChannelNumber = Byte.Parse(channel);
+				}
 
-					float[] timeFloats = new float[1024];
+				float[] timeFloats = new float[1024];
+				{
+					ii += 4;
+					for (int j = 0; j < 1024; j++)
 					{
+						timeFloats[j] = BitConverter.ToSingle(data, ii);
 						ii += 4;
-						for (int j = 0; j < 1024; j++)
-						{
-							timeFloats[j] = BitConverter.ToSingle(data, ii);
-							ii += 4;
-						}
-						timeData.Data = timeFloats;
 					}
+					timeData.Data = timeFloats;
+				}
 
-					return timeData;
-				}));
-			}
-
-			foreach (Task<DRS4TimeData> task in taskList)
-			{
-				if (task is null) taskList.Remove(task);
-			}
-
-			foreach  (Task<DRS4TimeData> task in taskList)
-			{
-				time.TimeData.Add(await task);
+				time.TimeData.Add(timeData);
 			}
 
 			return time;
 		}
 
-		private async Task<DRS4Event> ParseEventAsync(byte[] data) // Argument data is array of bytes between two event headers, not including the headers
+		private DRS4Event ParseEvent(byte[] data) // Argument data is array of bytes between two event headers, not including the headers
 		{
-			DRS4Event @event = new();
+			DRS4Event @event = new()
+			{
+				EventData = new()
+			};
 
 			@event.EventSerialNumber = BitConverter.ToInt32(data, 0);
 			@event.EventTime = new(
@@ -94,36 +84,27 @@ namespace NOVO
 			List<Task<DRS4EventData>> taskList = new();
 			for (int i = 28; i < data.Length; i += (512 + 2) * 4)
 			{
-				taskList.Add(Task.Run( () => 
+				int ii = i;
+				DRS4EventData eventData = new();
 				{
-					int ii = i;
-					DRS4EventData eventData = new();
+					byte[] byte_channel_num = { data[ii + 1], data[ii + 2], data[ii + 3] };
+					string channel = $"{Convert.ToChar(byte_channel_num[0])}{Convert.ToChar(byte_channel_num[1])}{Convert.ToChar(byte_channel_num[2])}";
+					eventData.ChannelNumber = Byte.Parse(channel);
+				}
+
+				short[] voltageShorts = new short[1024];
+				{
+					ii += 4;
+					eventData.Scaler = BitConverter.ToInt32(data, ii);
+					for (int j = 0; j < 1024; j++)
 					{
-						byte[] byte_channel_num = { data[ii + 1], data[ii + 2], data[ii + 3] };
-						string channel = $"{Convert.ToChar(byte_channel_num[0])}{Convert.ToChar(byte_channel_num[1])}{Convert.ToChar(byte_channel_num[2])}";
-						eventData.ChannelNumber = Byte.Parse(channel);
+						voltageShorts[j] = BitConverter.ToInt16(data, ii);
+						ii += 2;
 					}
+					eventData.Voltage = voltageShorts;
+				}
 
-					short[] voltageShorts = new short[1024];
-					{
-						ii += 4;
-						eventData.Scaler = BitConverter.ToInt32(data, ii);
-						for (int j = 0; j < 1024; j++)
-						{
-							voltageShorts[j] = BitConverter.ToInt16(data, ii);
-							ii += 2;
-						}
-						eventData.Voltage = voltageShorts;
-					}
-
-					return eventData;
-				}));
-				
-			}
-
-			foreach (Task<DRS4EventData> task in taskList)
-			{
-				@event.EventData.Add(await task);
+				@event.EventData.Add(eventData);
 			}
 
 			return @event;
@@ -178,7 +159,7 @@ namespace NOVO
 				file.Read(timeData, 0, read_length);
 				file.Position = temp_pos;
 
-				tskTimeData = ParseTimeAsync(timeData);
+				tskTimeData = Task.Run(() => ParseTime(timeData));
 			}
 
 			List<Task<DRS4Event>> tskEventData = new();
@@ -198,7 +179,7 @@ namespace NOVO
 					int read_length = (int)(eventPos[i + 1] - (eventPos[i] + 4) );
 					byte[] eventData = new byte[read_length];
 					file.Read(eventData, 0, read_length);
-					tskEventData.Add(ParseEventAsync(eventData));
+					tskEventData.Add(Task.Run(() => ParseEvent(eventData)));
 				}
 				file.Position = temp_pos;
 			}
