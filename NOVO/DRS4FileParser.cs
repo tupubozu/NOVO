@@ -15,6 +15,8 @@ namespace NOVO
 		private static readonly Regex eventHeaderRegex = new Regex("^EHDR$");
 		private static readonly Regex timeHeaderRegex = new Regex("^TIME$");
 
+		private FileStream file;
+
 		private DRS4FileParser() : this(null) { }
 		private DRS4FileParser(FileStream stream)
 		{
@@ -22,15 +24,13 @@ namespace NOVO
 		}
 		static DRS4FileParser() { }
 
-
 		private DRS4Time ParseTime(byte[] data)
 		{
 			DRS4Time time = new()
 			{
+				BoardNumber = BitConverter.ToInt16(data, 2),
 				TimeData = new()
 			};
-
-			time.BoardNumber = BitConverter.ToInt16(data, 2);
 
 			for (int i = 4; i < data.Length; i += 1025 * 4)
 			{
@@ -63,22 +63,21 @@ namespace NOVO
 		{
 			DRS4Event @event = new()
 			{
+				EventSerialNumber = BitConverter.ToInt32(data, 0),
+				EventTime = new(
+					year: BitConverter.ToUInt16(data, 4),
+					month: BitConverter.ToUInt16(data, 6),
+					day: BitConverter.ToUInt16(data, 8),
+					hour: BitConverter.ToUInt16(data, 10),
+					minute: BitConverter.ToUInt16(data, 12),
+					second: BitConverter.ToUInt16(data, 14),
+					millisecond: BitConverter.ToUInt16(data, 16)
+				),
+				Range = BitConverter.ToInt16(data, 18),
+				BoardNumber = BitConverter.ToUInt16(data, 22),
+				TriggerCell = BitConverter.ToUInt16(data, 26),
 				EventData = new()
 			};
-
-			@event.EventSerialNumber = BitConverter.ToInt32(data, 0);
-			@event.EventTime = new(
-				year: BitConverter.ToInt16(data, 4),
-				month: BitConverter.ToInt16(data, 6),
-				day: BitConverter.ToInt16(data, 8),
-				hour: BitConverter.ToInt16(data, 10),
-				minute: BitConverter.ToInt16(data, 12),
-				second: BitConverter.ToInt16(data, 14),
-				millisecond: BitConverter.ToInt16(data, 16)
-				);
-			@event.Range = BitConverter.ToInt16(data, 18);
-			@event.BoardNumber = BitConverter.ToInt16(data, 22);
-			@event.TriggerCell = BitConverter.ToInt16(data, 26);
 
 			for (int i = 28; i < data.Length; i += (512 + 2) * 4)
 			{
@@ -90,13 +89,13 @@ namespace NOVO
 					eventData.ChannelNumber = Byte.Parse(channel);
 				}
 
-				short[] voltageShorts = new short[1024];
+				ushort[] voltageShorts = new ushort[1024];
 				{
 					ii += 4;
 					eventData.Scaler = BitConverter.ToInt32(data, ii);
 					for (int j = 0; j < 1024; j++)
 					{
-						voltageShorts[j] = BitConverter.ToInt16(data, ii);
+						voltageShorts[j] = BitConverter.ToUInt16(data, ii);
 						ii += 2;
 					}
 					eventData.Voltage = voltageShorts;
@@ -107,30 +106,24 @@ namespace NOVO
 
 			return @event;
 		}
-		
-
-		public SortedDictionary<long, DRS4FileFlag> DRS4FileFlagDict = new SortedDictionary<long, DRS4FileFlag>();
-		private FileStream file;
-
+				
 		public static DRS4FileParser NewParser(FileStream stream)
 		{
 			return new DRS4FileParser(stream);
 		}
 
-		
 		public async Task<DRS4FileData> ParseAsync() 
 		{
 			DRS4FileData Data = new();
-
 			{
 				long temp_pos = file.Position;
 				file.Position = 3;
 				byte versByte = (byte)file.ReadByte();
 				file.Position = temp_pos;
-				Data.Version = Convert.ToByte(Convert.ToChar(versByte));
+				Data.Version = Byte.Parse(Convert.ToChar(versByte).ToString());
 			}
-			
-			BuildDictionary();
+
+			SortedDictionary<long, DRS4FileFlag> DRS4FileFlagDict = BuildDictionary();
 
 			Task<DRS4Time> tskTimeData;
 			{
@@ -209,9 +202,11 @@ namespace NOVO
 			return fileRegex.IsMatch(str_word);
 		}
 
-		private void BuildDictionary()
+		private SortedDictionary<long, DRS4FileFlag> BuildDictionary()
 		{
-			DRS4FileFlagDict.Add(0, DRS4FileFlag.File);
+		SortedDictionary<long, DRS4FileFlag> FileFlags = new SortedDictionary<long, DRS4FileFlag>();
+
+		FileFlags.Add(0, DRS4FileFlag.File);
 			
 			long temp_pos = file.Position;
 			file.Position = 4;
@@ -224,20 +219,23 @@ namespace NOVO
 
 				if (timeHeaderRegex.IsMatch(str_word))
 				{
-					DRS4FileFlagDict.Add(file.Position - 4, DRS4FileFlag.Time);
+					FileFlags.Add(file.Position - 4, DRS4FileFlag.Time);
 				}
 				else if (eventHeaderRegex.IsMatch(str_word))
 				{
-					DRS4FileFlagDict.Add(file.Position - 4, DRS4FileFlag.Event);
+					FileFlags.Add(file.Position - 4, DRS4FileFlag.Event);
 				}
 				else if (channelRegex.IsMatch(str_word))
 				{
-					DRS4FileFlagDict.Add(file.Position - 4, DRS4FileFlag.Channel);
+					FileFlags.Add(file.Position - 4, DRS4FileFlag.Channel);
 				}
 			}
 
 			file.Position = temp_pos;
+
+			return FileFlags;
 		}
+
 		private string LineString(byte[] line)
 		{
 			return $"{Convert.ToChar(line[0])}{Convert.ToChar(line[1])}{Convert.ToChar(line[2])}{Convert.ToChar(line[3])}";

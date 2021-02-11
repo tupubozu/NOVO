@@ -17,34 +17,30 @@ namespace NOVO
 			var user_input = Console.ReadLine().Trim(trimChars);
 			var user_path = Path.GetFullPath(user_input);
 
-			
 			DRS4FileData data = null;
 
 			try
 			{
 				DRS4FileParser parser = null;
-				using (var fileHandler = File.Open(user_path, FileMode.Open))
+				using var fileHandler = File.Open(user_path, FileMode.Open);
+				parser = DRS4FileParser.NewParser(fileHandler);
+				if (parser.Validate())
 				{
-					parser = DRS4FileParser.NewParser(fileHandler);
-					if (parser.Validate())
-					{
-						data = await parser.ParseAsync();
-						// For debug purposes...
-						foreach (var item in parser.DRS4FileFlagDict)
-						{
-							Console.WriteLine(item);
-						}
-					}
+					data = await parser.ParseAsync();
 				}
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				Console.Error.WriteLine(ex.ToString());
 			}
 
-			if (data != null) Console.WriteLine(data);
+			if (data != null)
+			{
+				Console.WriteLine("-------------------------------------------");
+				Console.WriteLine(data);
+			}
 
-			Console.WriteLine("\n------------\nEnd of program");
+			Console.WriteLine("\n-------------------------------------------\nEnd of program");
 			Console.ReadKey(true);
 		}
 	}
