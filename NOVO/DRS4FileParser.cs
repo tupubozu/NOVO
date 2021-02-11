@@ -80,8 +80,6 @@ namespace NOVO
 			@event.BoardNumber = BitConverter.ToInt16(data, 22);
 			@event.TriggerCell = BitConverter.ToInt16(data, 26);
 
-
-			List<Task<DRS4EventData>> taskList = new();
 			for (int i = 28; i < data.Length; i += (512 + 2) * 4)
 			{
 				int ii = i;

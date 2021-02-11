@@ -13,7 +13,8 @@ namespace NOVO
 			Console.WriteLine("-------------------------------------------");
 			
 			Console.Write("Path to file: ");
-			var user_input = Console.ReadLine();
+			char[] trimChars = {'\"', ' ', '\'' };
+			var user_input = Console.ReadLine().Trim(trimChars);
 			var user_path = Path.GetFullPath(user_input);
 
 			
