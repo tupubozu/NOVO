@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using System.Text.Json.Serialization;
+using NOVO.DRS4File;
 
 namespace NOVO
 {
