@@ -24,7 +24,7 @@ namespace NOVO.DRS4File
 		}
 		static DRS4FileParser() { }
 
-		private DRS4Time ParseTime(byte[] data)
+		private DRS4Time ParseTime(byte[] data) // Argument data is array of bytes between two event headers, not including the headers
 		{
 			DRS4Time time = new()
 			{
@@ -125,6 +125,7 @@ namespace NOVO.DRS4File
 
 			SortedDictionary<long, DRS4FileFlag> DRS4FileFlagDict = BuildDictionary();
 
+			// Preparation and async excecution of parser function for DRS4Time object. 
 			Task<DRS4Time> tskTimeData;
 			{
 				long read_start_pos = 0;
@@ -153,6 +154,7 @@ namespace NOVO.DRS4File
 				tskTimeData = Task.Run(() => ParseTime(timeData));
 			}
 
+			// Preparation and async excecution of parser functions for DRS4Event objects. 
 			List<Task<DRS4Event>> tskEventData = new();
 			{
 				List<long> eventPos = new();
@@ -175,8 +177,10 @@ namespace NOVO.DRS4File
 				file.Position = temp_pos;
 			}
 
+			// Await result of DRS4Time object parsing
 			Data.Time = await tskTimeData;
 
+			// Await results of DRS4Event object parsing
 			List<DRS4Event> events = new();
 			for (int i = 0; i < tskEventData.Count; i++)
 			{
@@ -204,9 +208,9 @@ namespace NOVO.DRS4File
 
 		private SortedDictionary<long, DRS4FileFlag> BuildDictionary()
 		{
-		SortedDictionary<long, DRS4FileFlag> FileFlags = new SortedDictionary<long, DRS4FileFlag>();
+			SortedDictionary<long, DRS4FileFlag> FileFlags = new SortedDictionary<long, DRS4FileFlag>();
 
-		FileFlags.Add(0, DRS4FileFlag.File);
+			FileFlags.Add(0, DRS4FileFlag.File);
 			
 			long temp_pos = file.Position;
 			file.Position = 4;
