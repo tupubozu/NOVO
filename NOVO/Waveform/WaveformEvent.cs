@@ -9,7 +9,7 @@ namespace NOVO.Waveform
 		// Its purpose is to contain sets of waveforms, with associated timestamps and voltages represented with floating point datatypes.  
 
 		public DateTime EventDateTime;
-		public byte BoardNumber;
+		public ushort BoardNumber;
 
 		public List<WaveformData> Channels;
 

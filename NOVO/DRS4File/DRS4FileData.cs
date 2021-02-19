@@ -29,17 +29,51 @@ namespace NOVO.DRS4File
 			throw new NotImplementedException();
 		}
 
-		public WaveformEvent ToWaveformEvent(DRS4Event e, DRS4Time t)
+		private WaveformEvent ToWaveformEvent(DRS4Event e, DRS4Time t)
 		{
+			WaveformEvent waveformEvent = new()
+			{
+				EventDateTime = e.EventTime,
+				BoardNumber = t.BoardNumber,
+				Channels = new()
+			};
 
-			throw new NotImplementedException();
+			foreach (DRS4EventData ed in e.EventData)
+			{
+				WaveformData temp = new()
+				{
+					ChannelNumber = ed.ChannelNumber,
+					Samples = new()
+				};
+
+				for (int i = 0; i < ed.Voltage.Length; i++)
+				{
+					double timeComponent = 0;
+					
+					DRS4TimeData temp_time_data = null;
+					foreach (DRS4TimeData data_item in t.TimeData)
+					{
+						if (data_item.ChannelNumber == temp.ChannelNumber) temp_time_data = data_item;
+					}
+
+					for (int j = 0; j < temp_time_data.Data.Length; j++)
+					{
+						timeComponent += temp_time_data.Data[(j - e.TriggerCell)% 1024];
+					}
+
+					temp.Samples.Add(new(timeComponent, (double)ed.Voltage[i]/ushort.MaxValue - 500 - e.Range )); // Possible logic error...
+				}
+				waveformEvent.Channels.Add(temp);
+			}
+
+			return waveformEvent;
 		}
 	}
 	public class DRS4Time
 	{
 		// DRS4Time is a representation of the data found in/after the "TIME"-header inside a DRS4 binary file.
 
-		public short BoardNumber;
+		public ushort BoardNumber;
 		public List<DRS4TimeData> TimeData;
 	}
 	public class DRS4TimeData
