@@ -26,7 +26,21 @@ namespace NOVO.Waveform
 			{
 				sample.ShiftTime(timeDifference);
 			}
-		}	
+		}
+		
+		public double Regression(double time)
+		{
+			WaveformSample sample1 = new(), sample2 = new();
+			for (int i = 0; i < Samples.Count - 1; i++)
+			{
+				if (time >= Samples[i].TimeComponent && time < Samples[i + 1].TimeComponent)
+					(sample1, sample2) = (Samples[i], Samples[i + 1]);
+			}
+
+			double a = (sample2.VoltageComponent - sample1.VoltageComponent) / (sample2.TimeComponent - sample1.TimeComponent);
+
+			return a * (time - sample1.TimeComponent) + sample1.VoltageComponent;
+		}
 	}
 	
 	public class WaveformSample

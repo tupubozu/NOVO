@@ -32,12 +32,38 @@ namespace NOVO.Waveform
 				Channels[i].ShiftTime(referanceTimestamp - timestamp); // Possible logic error...
 			}
 		}
+
 		public void ShiftTime(double timeDifference)
 		{
-			for (int i = 1; i < Channels.Count; i++)
+			foreach (WaveformData channel in Channels)
 			{
-				Channels[i].ShiftTime(timeDifference); 
+				channel.ShiftTime(timeDifference); 
 			}
+		}
+
+		public string ToCSV(double start_time, double stop_time, double sample_time)
+		{
+			string output_str = string.Empty;
+
+			for (int j = 0; j < Channels.Count; j++)
+			{
+				output_str += $"\"Channel {j}\"";
+				if (!(j >= Channels.Count)) output_str += ",";
+			}
+			output_str += "\n";
+
+			for (double i = start_time;  i < stop_time; i += sample_time)
+			{
+				output_str += $"\"{i}\",";
+				for (int j = 0; j < Channels.Count; j++)
+				{
+					output_str += $"\"{Channels[j].Regression(i)}\"";
+					if (!(j >= Channels.Count)) output_str += ",";
+				}
+				output_str += "\n";
+			}
+			
+			return output_str;
 		}
 	}
 }
