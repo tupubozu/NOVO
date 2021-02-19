@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using NOVO.Waveform;
 
 namespace NOVO.DRS4File
 {
@@ -20,6 +21,18 @@ namespace NOVO.DRS4File
 				string.Format("\tNumber of events: {0}", this.Events.Count)
 				);
 			return output; 
+		}
+
+		public List<WaveformEvent> ToWaveforms()
+		{
+
+			throw new NotImplementedException();
+		}
+
+		public WaveformEvent ToWaveformEvent(DRS4Event e, DRS4Time t)
+		{
+
+			throw new NotImplementedException();
 		}
 	}
 	public class DRS4Time

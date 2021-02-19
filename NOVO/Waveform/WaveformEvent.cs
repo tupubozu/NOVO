@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace NOVO.Waveform
 {
-	class WaveformEvent : IComparable<WaveformEvent>, IComparer<WaveformEvent>
+	public class WaveformEvent : IComparable<WaveformEvent>, IComparer<WaveformEvent>
 	{
 		// WaveformEvent is a high level abstraction of the DRS4Event and DRS4Time objects.
 		// Its purpose is to contain sets of waveforms, with associated timestamps and voltages represented with floating point datatypes.  
@@ -43,7 +43,7 @@ namespace NOVO.Waveform
 
 		public string ToCSV(double start_time, double stop_time, double sample_time)
 		{
-			string output_str = string.Empty;
+			string output_str = "\"Time\",";
 
 			for (int j = 0; j < Channels.Count; j++)
 			{
