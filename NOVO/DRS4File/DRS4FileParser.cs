@@ -126,7 +126,7 @@ namespace NOVO.DRS4File
 		{
 			DRS4Time time = new()
 			{
-				BoardNumber = BitConverter.ToInt16(data, 2),
+				BoardNumber = BitConverter.ToUInt16(data, 2),
 				TimeData = new()
 			};
 

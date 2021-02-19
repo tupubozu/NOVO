@@ -84,7 +84,7 @@ namespace NOVO.DRS4File
 
 					for (int j = 0; j < temp_time_data.Data.Length; j++)
 					{
-						timeComponent += temp_time_data.Data[(j - e.TriggerCell)% 1024];
+						timeComponent += temp_time_data.Data[((j + e.TriggerCell) % temp_time_data.Data.Length)];
 					}
 
 					temp.Samples.Add(new(timeComponent, (double)ed.Voltage[i]/ushort.MaxValue - 500 - e.Range )); // Possible logic error...

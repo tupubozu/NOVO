@@ -44,6 +44,7 @@ namespace NOVO
 			}
 
 			List<WaveformEvent> Waves = await data.ToWaveformEventsAsync();
+			//List<WaveformEvent> Waves = data.ToWaveformEvents();
 
 			Console.WriteLine(Waves[0].ToCSV(-100.0,1024.0, 0.001));
 
