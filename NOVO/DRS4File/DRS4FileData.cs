@@ -82,12 +82,12 @@ namespace NOVO.DRS4File
 						if (data_item.ChannelNumber == temp.ChannelNumber) temp_time_data = data_item;
 					}
 
-					for (int j = 0; j < temp_time_data.Data.Length; j++)
+					for (int j = 0; j < i - 1; j++)
 					{
-						timeComponent += temp_time_data.Data[((j + e.TriggerCell) % temp_time_data.Data.Length)];
+						timeComponent += temp_time_data.Data[(j + e.TriggerCell) % temp_time_data.Data.Length];
 					}
 
-					temp.Samples.Add(new(timeComponent, (double)ed.Voltage[i]/ushort.MaxValue - 500 - e.Range )); // Possible logic error...
+					temp.Samples.Add(new(timeComponent, ((1000.0 * ed.Voltage[i]) / ushort.MaxValue) - 500 - e.Range )); // Possible logic error...
 				}
 				waveformEvent.Channels.Add(temp);
 			}

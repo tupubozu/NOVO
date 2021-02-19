@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace NOVO.Waveform
 {
@@ -43,6 +44,15 @@ namespace NOVO.Waveform
 
 		public string ToCSV(double start_time, double stop_time, double sample_time)
 		{
+			NumberFormatInfo numberFormat = new()
+			{
+				CurrencyDecimalSeparator = ".",
+				NumberDecimalSeparator = ".",
+				PercentDecimalSeparator = "."
+			};
+
+			int digits = (int)Math.Round(Math.Abs(Math.Log10(sample_time)) + 0.5, 0);
+
 			string output_str = "\"Time\",";
 
 			for (int j = 0; j < Channels.Count; j++)
@@ -54,11 +64,11 @@ namespace NOVO.Waveform
 
 			for (double i = start_time;  i < stop_time; i += sample_time)
 			{
-				output_str += $"\"{i}\",";
+				output_str += string.Format("\"{0}\",", Math.Round(i, digits).ToString(numberFormat));
 				for (int j = 0; j < Channels.Count; j++)
 				{
-					output_str += $"\"{Channels[j].Regression(i)}\"";
-					if (!(j >= Channels.Count)) output_str += ",";
+					output_str += string.Format("\"{0}\"", Math.Round(Channels[j].Regression(i), digits).ToString(numberFormat));
+					if (j < Channels.Count - 1) output_str += ",";
 				}
 				output_str += "\n";
 			}

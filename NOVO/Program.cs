@@ -43,10 +43,15 @@ namespace NOVO
 				Console.WriteLine(data);
 			}
 
+			Console.WriteLine("-------------------------------------------");
+			Console.Write("Constructing Waveform object... ");
 			List<WaveformEvent> Waves = await data.ToWaveformEventsAsync();
 			//List<WaveformEvent> Waves = data.ToWaveformEvents();
+			Console.WriteLine("Done!");
 
-			Console.WriteLine(Waves[0].ToCSV(-100.0,1024.0, 0.001));
+			Console.WriteLine("-------------------------------------------");
+
+			Console.WriteLine(Waves[0].ToCSV(-10.0,1024.0, 0.001));
 
 			Console.WriteLine("\n-------------------------------------------\nEnd of program");
 			Console.ReadKey(true);

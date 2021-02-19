@@ -34,10 +34,14 @@ namespace NOVO.Waveform
 			for (int i = 0; i < Samples.Count - 1; i++)
 			{
 				if (time >= Samples[i].TimeComponent && time < Samples[i + 1].TimeComponent)
-					(sample1, sample2) = (Samples[i], Samples[i + 1]);
+				{
+					sample1 = Samples[i];
+					sample2 = Samples[i + 1];
+				}
 			}
 
 			double a = (sample2.VoltageComponent - sample1.VoltageComponent) / (sample2.TimeComponent - sample1.TimeComponent);
+			if (double.IsNaN(a)) a = 0;
 
 			return a * (time - sample1.TimeComponent) + sample1.VoltageComponent;
 		}
