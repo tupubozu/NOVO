@@ -23,6 +23,104 @@ namespace NOVO.DRS4File
 			file = stream;
 		}
 		static DRS4FileParser() { }
+		public static DRS4FileParser NewParser(FileStream stream)
+		{
+			return new DRS4FileParser(stream);
+		}
+
+		public bool Validate()
+		{
+			byte[] file_word = new byte[4];
+
+			long temp_pos = file.Position;
+			file.Position = 0;
+			file.Read(file_word, 0, 4);
+			file.Position = temp_pos;
+
+			Convert.ToChar(file_word[0]);
+			string str_word = LineString(file_word);
+
+			return fileRegex.IsMatch(str_word);
+		}
+
+		public async Task<DRS4FileData> ParseAsync()
+		{
+			DRS4FileData Data = new();
+			{
+				long temp_pos = file.Position;
+				file.Position = 3;
+				byte versByte = (byte)file.ReadByte();
+				file.Position = temp_pos;
+				Data.Version = Byte.Parse(Convert.ToChar(versByte).ToString());
+			}
+
+			SortedDictionary<long, DRS4FileFlag> DRS4FileFlagDict = BuildDictionary();
+
+			// Preparation and async excecution of parser function for DRS4Time object. 
+			Task<DRS4Time> tskTimeData;
+			{
+				long read_start_pos = 0;
+				long read_end_pos = 0;
+				foreach (var item in DRS4FileFlagDict)
+				{
+					if (item.Value == DRS4FileFlag.Time)
+					{
+						read_start_pos = item.Key + 4;
+					}
+					else if (item.Value == DRS4FileFlag.Event)
+					{
+						read_end_pos = item.Key;
+						break;
+					}
+				}
+
+				int read_length = (int)(read_end_pos - read_start_pos);
+
+				byte[] timeData = new byte[read_length];
+				long temp_pos = file.Position;
+				file.Position = read_start_pos;
+				file.Read(timeData, 0, read_length);
+				file.Position = temp_pos;
+
+				tskTimeData = Task.Run(() => ParseTime(timeData));
+			}
+
+			// Preparation and async excecution of parser functions for DRS4Event objects. 
+			List<Task<DRS4Event>> tskEventData = new();
+			{
+				List<long> eventPos = new();
+				foreach (var item in DRS4FileFlagDict)
+				{
+					if (item.Value == DRS4FileFlag.Event)
+					{
+						eventPos.Add(item.Key);
+					}
+				}
+				long temp_pos = file.Position;
+				for (int i = 0; i < eventPos.Count - 1; i++)
+				{
+					file.Position = eventPos[i] + 4;
+					int read_length = (int)(eventPos[i + 1] - (eventPos[i] + 4));
+					byte[] eventData = new byte[read_length];
+					file.Read(eventData, 0, read_length);
+					tskEventData.Add(Task.Run(() => ParseEvent(eventData)));
+				}
+				file.Position = temp_pos;
+			}
+
+			// Await result of DRS4Time object parsing
+			Data.Time = await tskTimeData;
+
+			// Await results of DRS4Event object parsing
+			List<DRS4Event> events = new();
+			for (int i = 0; i < tskEventData.Count; i++)
+			{
+				events.Add(await tskEventData[i]);
+			}
+
+			Data.Events = events;
+			return Data;
+		}
 
 		private DRS4Time ParseTime(byte[] data) // Argument data is array of bytes between two event headers, not including the headers
 		{
@@ -105,105 +203,6 @@ namespace NOVO.DRS4File
 			}
 
 			return @event;
-		}
-				
-		public static DRS4FileParser NewParser(FileStream stream)
-		{
-			return new DRS4FileParser(stream);
-		}
-
-		public async Task<DRS4FileData> ParseAsync() 
-		{
-			DRS4FileData Data = new();
-			{
-				long temp_pos = file.Position;
-				file.Position = 3;
-				byte versByte = (byte)file.ReadByte();
-				file.Position = temp_pos;
-				Data.Version = Byte.Parse(Convert.ToChar(versByte).ToString());
-			}
-
-			SortedDictionary<long, DRS4FileFlag> DRS4FileFlagDict = BuildDictionary();
-
-			// Preparation and async excecution of parser function for DRS4Time object. 
-			Task<DRS4Time> tskTimeData;
-			{
-				long read_start_pos = 0;
-				long read_end_pos = 0;
-				foreach (var item in DRS4FileFlagDict)
-				{
-					if (item.Value == DRS4FileFlag.Time)
-					{
-						read_start_pos = item.Key + 4;
-					}
-					else if (item.Value == DRS4FileFlag.Event)
-					{
-						read_end_pos = item.Key;
-						break;
-					}
-				}
-
-				int read_length = (int)(read_end_pos - read_start_pos);
-
-				byte[] timeData = new byte[read_length];
-				long temp_pos = file.Position;
-				file.Position = read_start_pos;
-				file.Read(timeData, 0, read_length);
-				file.Position = temp_pos;
-
-				tskTimeData = Task.Run(() => ParseTime(timeData));
-			}
-
-			// Preparation and async excecution of parser functions for DRS4Event objects. 
-			List<Task<DRS4Event>> tskEventData = new();
-			{
-				List<long> eventPos = new();
-				foreach (var item in DRS4FileFlagDict)
-				{
-					if (item.Value == DRS4FileFlag.Event)
-					{
-						eventPos.Add(item.Key);
-					}
-				}
-				long temp_pos = file.Position;
-				for (int i = 0; i < eventPos.Count - 1; i++)
-				{
-					file.Position = eventPos[i] + 4;
-					int read_length = (int)(eventPos[i + 1] - (eventPos[i] + 4) );
-					byte[] eventData = new byte[read_length];
-					file.Read(eventData, 0, read_length);
-					tskEventData.Add(Task.Run(() => ParseEvent(eventData)));
-				}
-				file.Position = temp_pos;
-			}
-
-			// Await result of DRS4Time object parsing
-			Data.Time = await tskTimeData;
-
-			// Await results of DRS4Event object parsing
-			List<DRS4Event> events = new();
-			for (int i = 0; i < tskEventData.Count; i++)
-			{
-				events.Add(await tskEventData[i]);
-			}
-
-			Data.Events = events;
-			return Data;
-		}
-
-		public bool Validate()
-		{
-			byte[] file_word = new byte[4];
-
-			long temp_pos = file.Position;
-			file.Position = 0;
-			file.Read(file_word, 0, 4);
-			file.Position = temp_pos;
-
-			Convert.ToChar(file_word[0]);
-			string str_word = LineString(file_word);
-
-			return fileRegex.IsMatch(str_word);
 		}
 
 		private SortedDictionary<long, DRS4FileFlag> BuildDictionary()
