@@ -32,5 +32,12 @@ namespace NOVO.Waveform
 				Channels[i].ShiftTime(referanceTimestamp - timestamp); // Possible logic error...
 			}
 		}
+		public void ShiftTime(double timeDifference)
+		{
+			for (int i = 1; i < Channels.Count; i++)
+			{
+				Channels[i].ShiftTime(timeDifference); 
+			}
+		}
 	}
 }
