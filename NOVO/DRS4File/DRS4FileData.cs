@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using NOVO.Waveform;
 
 namespace NOVO.DRS4File
@@ -23,10 +24,35 @@ namespace NOVO.DRS4File
 			return output; 
 		}
 
-		public List<WaveformEvent> ToWaveforms()
+		public List<WaveformEvent> ToWaveformEvents()
 		{
+			List<WaveformEvent> output = new();
 
-			throw new NotImplementedException();
+			foreach (DRS4Event event_item in this.Events)
+			{
+				if (event_item.BoardNumber == this.Time.BoardNumber)
+					output.Add(ToWaveformEvent(event_item, this.Time));
+			}
+
+			return output;
+		}
+
+		public async Task<List<WaveformEvent>> ToWaveformEventsAsync()
+		{
+			List<Task<WaveformEvent>> tskOutput = new();
+			foreach (DRS4Event event_item in this.Events)
+			{
+				if (event_item.BoardNumber == this.Time.BoardNumber)
+					tskOutput.Add(Task.Run( () => ToWaveformEvent(event_item, this.Time)));
+			}
+
+			List<WaveformEvent> output = new();
+			foreach (Task<WaveformEvent> worker in tskOutput)
+			{
+				output.Add(await worker);
+			}
+
+			return output;
 		}
 
 		private WaveformEvent ToWaveformEvent(DRS4Event e, DRS4Time t)

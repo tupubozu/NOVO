@@ -2,7 +2,9 @@
 using System.IO;
 using System.Threading.Tasks;
 using System.Text.Json.Serialization;
+using System.Collections.Generic;
 using NOVO.DRS4File;
+using NOVO.Waveform;
 
 namespace NOVO
 {
@@ -40,6 +42,10 @@ namespace NOVO
 				Console.WriteLine("-------------------------------------------");
 				Console.WriteLine(data);
 			}
+
+			List<WaveformEvent> Waves = await data.ToWaveformEventsAsync();
+
+			Console.WriteLine(Waves[0].ToCSV(-100.0,1024.0, 0.001));
 
 			Console.WriteLine("\n-------------------------------------------\nEnd of program");
 			Console.ReadKey(true);
