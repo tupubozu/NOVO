@@ -161,7 +161,7 @@ namespace NOVO.DRS4File
 		{
 			DRS4Event @event = new()
 			{
-				EventSerialNumber = BitConverter.ToInt32(data, 0),
+				EventSerialNumber = BitConverter.ToUInt32(data, 0),
 				EventTime = new(
 					year: BitConverter.ToUInt16(data, 4),
 					month: BitConverter.ToUInt16(data, 6),

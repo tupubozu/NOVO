@@ -61,6 +61,7 @@ namespace NOVO.DRS4File
 			{
 				EventDateTime = e.EventTime,
 				BoardNumber = t.BoardNumber,
+				SerialNumber = e.EventSerialNumber,
 				Channels = new()
 			};
 
@@ -113,7 +114,7 @@ namespace NOVO.DRS4File
 	{
 		// DRS4Event is a representation of the data found in/after an "EHDR"-header inside a DRS4 binary file.
 
-		public int EventSerialNumber;
+		public uint EventSerialNumber;
 
 		public DateTime EventTime;
 

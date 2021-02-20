@@ -11,6 +11,7 @@ namespace NOVO.Waveform
 
 		public DateTime EventDateTime;
 		public ushort BoardNumber;
+		public uint SerialNumber;
 
 		public List<WaveformData> Channels;
 
