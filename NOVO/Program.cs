@@ -53,15 +53,15 @@ namespace NOVO
 
 			Console.WriteLine("-------------------------------------------");
 
-			List<Task<string>> tsk_csv = new();
+			List<Task<string[]>> tsk_csv = new();
 			foreach(WaveformEvent waveformEvent in Waves)
 			{
-				tsk_csv.Add(Task.Run(() => waveformEvent.ToCSV(-1.0, 1024.0, 0.1)));
+				tsk_csv.Add(Task.Run(() => waveformEvent.ToCSVAsync(-1.0, 1024.0, 0.1)));
 			}
 
 			PendingOperationMessage("Awaiting completion of CSV string generation", tsk_csv);
 
-			List<string> csv_strings = new();
+			List<string[]> csv_strings = new();
 			foreach (var task in tsk_csv)
 			{
 				csv_strings.Add(task.Result);
@@ -71,18 +71,21 @@ namespace NOVO
 			for (int i = 0; i < csv_strings.Count; i++)
 			{
 				WaveformEvent temp_wave = Waves[i];
-				string temp_str = csv_strings[i];
+				string[] temp_str = csv_strings[i];
 				tskIO.Add(Task.Run( () => 
 				{
 					try
 					{
 						using var SW = new StreamWriter(
-							path: Path.GetFullPath($"DRS4-{temp_wave.BoardNumber}-{temp_wave.EventDateTime}-{temp_wave.SerialNumber}.csv"),
+							path: Path.GetFullPath($"DRS4_{temp_wave.BoardNumber}_{temp_wave.EventDateTime.ToString("yyyy-MM-dd_HHmmssfff")}_{temp_wave.SerialNumber}.csv"),
 							append: false,
-							encoding: Encoding.UTF8,
-							bufferSize: temp_str.Length
+							encoding: Encoding.UTF8
 							);
-						SW.Write(temp_str);
+						
+						foreach (string str in temp_str)
+						{
+							SW.WriteLine(str);
+						}
 					}
 					catch (Exception ex)
 					{
@@ -98,7 +101,7 @@ namespace NOVO
 			Console.ReadKey(true);
 		}
 
-		static void PendingOperationMessage(string message, List<Task<string>> tasks)
+		static void PendingOperationMessage(string message, List<Task<string[]>> tasks)
 		{
 			Console.Write(message);
 			Console.CursorVisible = false;
