@@ -171,7 +171,7 @@ namespace NOVO.DRS4File
 					second: BitConverter.ToUInt16(data, 14),
 					millisecond: BitConverter.ToUInt16(data, 16)
 				),
-				Range = BitConverter.ToInt16(data, 18),
+				RangeCenter = BitConverter.ToInt16(data, 18),
 				BoardNumber = BitConverter.ToUInt16(data, 22),
 				TriggerCell = BitConverter.ToUInt16(data, 26),
 				EventData = new()

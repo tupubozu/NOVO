@@ -83,12 +83,28 @@ namespace NOVO.DRS4File
 						if (data_item.ChannelNumber == temp.ChannelNumber) temp_time_data = data_item;
 					}
 
-					for (int j = 0; j < i - 1; j++)
+					/*	Possible logic error. 
+					 *	"DRS4 Evaluation BoardUser’s ManualBoard Revision 5.1" specifies summation from j = 0 to j = i - 1.
+					 *	
+					 *	In the event of i = 0, how does one sum the expession "dt_ch[(j+tcell)%1024]" for a 'j' starting at 0, and ending at -1?
+					 *	The following code: 
+					 *	
+					 *		for (int i = 0; i < 1024; i++) 
+					 *			for (int j = 0; j < i - 1; j++) 
+					 *				t_ch[i] += dt_ch[(j + tcell) % 1024]; 
+					 *	
+					 *	would represent the summation algoritm. (With "t_ch" and "dt_ch" both being float arrays (FP32) of size 1024.)
+					 *	
+					 *	Am I to understand that I am to sum in reverse?? How does that solve anything?
+					 *	Should 'j' have started at -1 and ended at 'i' instead???
+					 */
+
+					for (int j = 0; j <= i; j++) 
 					{
 						timeComponent += temp_time_data.Data[(j + e.TriggerCell) % temp_time_data.Data.Length];
 					}
 
-					temp.Samples.Add(new(timeComponent, ((1000.0 * ed.Voltage[i]) / ushort.MaxValue) - 500 - e.Range )); // Possible logic error...
+					temp.Samples.Add(new(timeComponent, ((1000.0 * ed.Voltage[i]) / ushort.MaxValue) - 500 + e.RangeCenter )); 
 				}
 				waveformEvent.Channels.Add(temp);
 			}
@@ -118,7 +134,7 @@ namespace NOVO.DRS4File
 
 		public DateTime EventTime;
 
-		public short Range;
+		public short RangeCenter;
 		public ushort BoardNumber;
 		public ushort TriggerCell;
 
