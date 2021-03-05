@@ -33,6 +33,14 @@ namespace NOVO.DRS4File
 				if (event_item.BoardNumber == this.Time.BoardNumber)
 					output.Add(ToWaveformEvent(event_item, this.Time));
 			}
+			
+			foreach (WaveformEvent item in output)
+			{
+				item.NormalizeTime();
+				item.Trim();
+				if (item.IsOutOfRange)
+					output.Remove(item);
+			}
 
 			return output;
 		}
@@ -50,7 +58,23 @@ namespace NOVO.DRS4File
 			foreach (Task<WaveformEvent> worker in tskOutput)
 			{
 				output.Add(await worker);
+				worker.Dispose();
 			}
+
+			List<WaveformEvent> removeableEvents = new();
+			foreach (WaveformEvent item in output)
+			{
+				item.NormalizeTime();
+				item.Trim();
+				if (item.IsOutOfRange)
+					removeableEvents.Add(item);
+			}
+
+			foreach (WaveformEvent item in removeableEvents)
+			{
+				output.Remove(item);
+			}
+			removeableEvents.Clear();
 
 			return output;
 		}
@@ -62,6 +86,8 @@ namespace NOVO.DRS4File
 				EventDateTime = e.EventTime,
 				BoardNumber = t.BoardNumber,
 				SerialNumber = e.EventSerialNumber,
+				RangeCenter = e.RangeCenter,
+				TriggerCell = e.TriggerCell,
 				Channels = new()
 			};
 

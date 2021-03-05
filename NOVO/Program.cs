@@ -53,10 +53,17 @@ namespace NOVO
 
 			Console.WriteLine("-------------------------------------------");
 
+			if (data.Events.Count > Waves.Count)
+			{
+				Console.WriteLine("Excluded {0} events due to ADC saturation", data.Events.Count - Waves.Count);
+
+				Console.WriteLine("-------------------------------------------");
+			}
+
 			List<IAsyncResult> tsk_csv = new();
 			foreach (WaveformEvent waveformEvent in Waves)
 			{
-				tsk_csv.Add(Task.Run(() => waveformEvent.ToCSVAsync(-1.0, 1024.0, 0.1)));
+				tsk_csv.Add(Task.Run(() => waveformEvent.ToCSVAsync(0.1)));
 			}
 
 			PendingOperationMessage("Awaiting completion of CSV string generation", tsk_csv);
@@ -64,7 +71,8 @@ namespace NOVO
 			List<string[]> csv_strings = new();
 			foreach (var task in tsk_csv)
 			{
-				csv_strings.Add((task as Task<string[]>).Result);
+				csv_strings.Add(await (task as Task<string[]>));
+				(task as IDisposable).Dispose();
 			}
 
 			try
@@ -125,6 +133,10 @@ namespace NOVO
 			}
 
 			PendingOperationMessage("Awaiting completion of file operations", tskIO);
+			foreach (var item in tskIO)
+			{
+				await (item as Task);
+			}
 			
 			Console.WriteLine("\n-------------------------------------------\nEnd of program");
 			Console.ReadKey(true);

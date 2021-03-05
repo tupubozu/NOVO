@@ -10,9 +10,16 @@ namespace NOVO.Waveform
 		// WaveformEvent is a high level abstraction of the DRS4Event and DRS4Time objects.
 		// Its purpose is to contain sets of waveforms, with associated timestamps and voltages represented with floating point datatypes.  
 
+		private static double relativeThresholdVoltage;
+		private static double removeThresholdVoltage;
+		private static int trimOffset;
+
 		public DateTime EventDateTime;
 		public ushort BoardNumber;
 		public uint SerialNumber;
+		public short RangeCenter;
+		public ushort TriggerCell;
+
 
 		public List<WaveformData> Channels;
 
@@ -26,6 +33,105 @@ namespace NOVO.Waveform
 				NumberDecimalSeparator = ".",
 				PercentDecimalSeparator = "."
 			};
+
+			relativeThresholdVoltage = 495.0;
+			removeThresholdVoltage = 5.0;
+			trimOffset = 15;
+		}
+
+		public bool IsOutOfRange 
+		{ 
+			get 
+			{
+				bool temp = false;
+				Task[] workers = new Task[Channels.Count];
+				for (int i = 0; i < Channels.Count; i++)
+				{
+					int alias_i = i;
+					workers[i] = Task.Run(() =>
+					{
+						foreach (WaveformSample sample in Channels[alias_i].Samples)
+						{
+							if (sample.VoltageComponent > RangeCenter + relativeThresholdVoltage || sample.VoltageComponent < RangeCenter - relativeThresholdVoltage)
+							{
+								temp = temp || true;
+								return;
+							}
+						}
+					}
+					);
+				}
+
+				foreach (Task worker in workers)
+				{
+					try
+					{
+						worker.Wait(new System.Threading.CancellationToken(temp));
+					}
+					catch (Exception /*ex*/)
+					{
+						//Console.Error.WriteLine(ex.Message);
+					}
+					finally
+					{
+						worker.Dispose();
+					}
+				}			
+
+				return temp;
+			} 
+		}
+
+		public void Trim()
+		{
+			TrimStart();
+			TrimEnd();
+		}
+		public void TrimStart()
+		{
+			foreach (WaveformData channel in Channels)
+			{
+				TrimChannelStart(channel);
+			}
+		}
+		private void TrimChannelStart(WaveformData channel)
+		{
+			for (int i = trimOffset; i < channel.Samples.Count; i++)
+			{
+				double temp = 0.0;
+				for (int j = i - trimOffset; j < i; j++)
+				{
+					temp += channel.Samples[j].VoltageComponent;
+				}
+				if (Math.Abs(channel.Samples[i].VoltageComponent) > (Math.Abs(temp / trimOffset) + removeThresholdVoltage))
+				{
+					channel.Samples.RemoveRange(0, i - trimOffset);
+					return;
+				}
+			}
+		}
+		public void TrimEnd()
+		{
+			foreach (WaveformData channel in Channels)
+			{
+				TrimChannelEnd(channel);
+			}
+		}
+		private void TrimChannelEnd(WaveformData channel)
+		{
+			for (int i = channel.Samples.Count - trimOffset - 1; i >= 0; i--)
+			{
+				double temp = 0.0;
+				for (int j = i + trimOffset; j > i; j--)
+				{
+					temp += channel.Samples[j].VoltageComponent;
+				}
+				if (Math.Abs(channel.Samples[i].VoltageComponent) > (Math.Abs(temp / trimOffset) + removeThresholdVoltage))
+				{
+					channel.Samples.RemoveRange(i + trimOffset, channel.Samples.Count - (i + trimOffset) - 1);
+					return;
+				}
+			}
 		}
 
 		public int Compare(WaveformEvent x, WaveformEvent y)
@@ -56,7 +162,24 @@ namespace NOVO.Waveform
 			}
 		}
 
-		public string ToCSV(double start_time, double stop_time, double sample_time)
+		public string ToCSV(double sample_time)
+		{
+			double startTime = double.MaxValue;
+			double stopTime = double.MinValue;
+			foreach (WaveformData channel in Channels)
+			{
+				if (channel.Samples[0].TimeComponent < startTime)
+					 startTime = channel.Samples[0].TimeComponent;
+			}
+			foreach (WaveformData channel in Channels)
+			{
+				if (channel.Samples[channel.Samples.Count - 1].TimeComponent > stopTime)
+					stopTime = channel.Samples[channel.Samples.Count - 1].TimeComponent;
+			}
+			return ToCSV(startTime, stopTime, sample_time);
+		}
+
+			public string ToCSV(double start_time, double stop_time, double sample_time)
 		{
 			int digits = (int)Math.Round(Math.Abs(Math.Log10(sample_time)) + 0.5, 0);
 
@@ -84,6 +207,23 @@ namespace NOVO.Waveform
 			}
 			
 			return output_str;
+		}
+
+		public async Task<string[]> ToCSVAsync(double sample_time)
+		{
+			double startTime = double.MaxValue;
+			double stopTime = double.MinValue;
+			foreach (WaveformData channel in Channels)
+			{
+				if (channel.Samples[0].TimeComponent < startTime)
+					startTime = channel.Samples[0].TimeComponent;
+			}
+			foreach (WaveformData channel in Channels)
+			{
+				if (channel.Samples[channel.Samples.Count - 1].TimeComponent > stopTime)
+					stopTime = channel.Samples[channel.Samples.Count - 1].TimeComponent;
+			}
+			return await ToCSVAsync(startTime - sample_time, stopTime + sample_time, sample_time);
 		}
 
 		public async Task<string[]> ToCSVAsync(double start_time, double stop_time, double sample_time)
@@ -127,6 +267,7 @@ namespace NOVO.Waveform
 			for (int i = 0; i < output.Length; i++)
 			{
 				output[i] = await tskOutput[i];
+				tskOutput[i].Dispose();
 			}
 			
 			return output;
