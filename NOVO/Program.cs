@@ -16,9 +16,9 @@ namespace NOVO
 		{
 			Console.WriteLine("NOVO-project DRS4 binary file parser/reader");
 			Console.WriteLine("-------------------------------------------");
-			
+
 			Console.Write("Path to file: ");
-			char[] trimChars = {'\"', ' ', '\'' };
+			char[] trimChars = { '\"', ' ', '\'' };
 			var user_input = Console.ReadLine().Trim(trimChars);
 			var user_path = Path.GetFullPath(user_input);
 
@@ -53,8 +53,8 @@ namespace NOVO
 
 			Console.WriteLine("-------------------------------------------");
 
-			List<Task<string[]>> tsk_csv = new();
-			foreach(WaveformEvent waveformEvent in Waves)
+			List<IAsyncResult> tsk_csv = new();
+			foreach (WaveformEvent waveformEvent in Waves)
 			{
 				tsk_csv.Add(Task.Run(() => waveformEvent.ToCSVAsync(-1.0, 1024.0, 0.1)));
 			}
@@ -64,10 +64,33 @@ namespace NOVO
 			List<string[]> csv_strings = new();
 			foreach (var task in tsk_csv)
 			{
-				csv_strings.Add(task.Result);
+				csv_strings.Add((task as Task<string[]>).Result);
 			}
 
-			List<Task> tskIO = new();
+			try
+			{
+				Console.WriteLine("-------------------------------------------");
+				Console.Write("Creating data directory... ");
+				Directory.CreateDirectory(
+					Path.Combine(
+						Path.GetDirectoryName(user_path),
+						$"{Path.GetFileNameWithoutExtension(user_path)}_data"
+						)
+					);
+				Console.WriteLine("Done");
+
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine("Failed\nReason: {0}",ex.Message);
+				Console.Error.WriteLine(ex);
+			}
+			finally
+			{
+				Console.WriteLine("-------------------------------------------");
+			}
+
+			List<IAsyncResult> tskIO = new();
 			for (int i = 0; i < csv_strings.Count; i++)
 			{
 				WaveformEvent temp_wave = Waves[i];
@@ -77,7 +100,13 @@ namespace NOVO
 					try
 					{
 						using var SW = new StreamWriter(
-							path: Path.GetFullPath($"DRS4_{temp_wave.BoardNumber}_{temp_wave.EventDateTime.ToString("yyyy-MM-dd_HHmmssfff")}_{temp_wave.SerialNumber}.csv"),
+							path: Path.GetFullPath(
+								Path.Combine(
+									Path.GetDirectoryName(user_path),
+									$"{Path.GetFileNameWithoutExtension(user_path)}_data",
+									$"DRS4_{temp_wave.BoardNumber}_{temp_wave.EventDateTime.ToString("yyyy-MM-dd_HHmmssfff")}_{temp_wave.SerialNumber}.csv"
+									)
+								),
 							append: false,
 							encoding: Encoding.UTF8
 							);
@@ -101,40 +130,7 @@ namespace NOVO
 			Console.ReadKey(true);
 		}
 
-		static void PendingOperationMessage(string message, List<Task<string[]>> tasks)
-		{
-			Console.Write(message);
-			Console.CursorVisible = false;
-
-			(int x, int y) = Console.GetCursorPosition();
-			foreach (var task in tasks)
-			{
-				byte cntr = 0;
-				while (!task.IsCompleted)
-				{
-					Console.Write(".  ");
-					Thread.Sleep(200);
-					if (cntr > 2)
-					{
-						cntr = 0;
-						Console.SetCursorPosition(x, y);
-						Console.Write("   ");
-						Console.SetCursorPosition(x, y);
-					}
-					else
-					{
-						Console.SetCursorPosition(x + cntr, y);
-						cntr++;
-					}
-				}
-				Console.SetCursorPosition(x, y);
-			}
-
-			Console.WriteLine("\tDone!");
-			Console.CursorVisible = true;
-		}
-
-		static void PendingOperationMessage(string message, List<Task> tasks)
+		static void PendingOperationMessage(string message, List<IAsyncResult> tasks)
 		{
 			Console.Write(message);
 			Console.CursorVisible = false;
