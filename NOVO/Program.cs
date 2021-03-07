@@ -60,24 +60,8 @@ namespace NOVO
 				Console.WriteLine("-------------------------------------------");
 			}
 
-			List<IAsyncResult> tsk_csv = new();
-			foreach (WaveformEvent waveformEvent in Waves)
-			{
-				tsk_csv.Add(Task.Run(() => waveformEvent.ToCSVAsync(0.1)));
-			}
-
-			PendingOperationMessage("Awaiting completion of CSV string generation", tsk_csv);
-
-			List<string[]> csv_strings = new();
-			foreach (var task in tsk_csv)
-			{
-				csv_strings.Add(await (task as Task<string[]>));
-				(task as IDisposable).Dispose();
-			}
-
 			try
 			{
-				Console.WriteLine("-------------------------------------------");
 				Console.Write("Creating data directory... ");
 				Directory.CreateDirectory(
 					Path.Combine(
@@ -90,7 +74,7 @@ namespace NOVO
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine("Failed\nReason: {0}",ex.Message);
+				Console.WriteLine("Failed\nReason: {0}", ex.Message);
 				Console.Error.WriteLine(ex);
 			}
 			finally
@@ -98,80 +82,73 @@ namespace NOVO
 				Console.WriteLine("-------------------------------------------");
 			}
 
-			List<IAsyncResult> tskIO = new();
-			for (int i = 0; i < csv_strings.Count; i++)
+			List<IAsyncResult> tskWorker = new();
+			foreach (WaveformEvent waveformEvent in Waves)
 			{
-				WaveformEvent temp_wave = Waves[i];
-				string[] temp_str = csv_strings[i];
-				tskIO.Add(Task.Run( () => 
-				{
-					try
+				tskWorker.Add(Task.Run( async() =>
 					{
-						using var SW = new StreamWriter(
-							path: Path.GetFullPath(
-								Path.Combine(
-									Path.GetDirectoryName(user_path),
-									$"{Path.GetFileNameWithoutExtension(user_path)}_data",
-									$"DRS4_{temp_wave.BoardNumber}_{temp_wave.EventDateTime.ToString("yyyy-MM-dd_HHmmssfff")}_{temp_wave.SerialNumber}.csv"
-									)
-								),
-							append: false,
-							encoding: Encoding.UTF8
-							);
-						
-						foreach (string str in temp_str)
+						try
 						{
-							SW.WriteLine(str);
+							string[] fileString = await waveformEvent.ToCSVAsync(0.1);
+							string fileName = $"DRS4_{waveformEvent.BoardNumber}_{waveformEvent.EventDateTime.ToString("yyyy-MM-dd_HHmmssfff")}_{waveformEvent.SerialNumber}.csv";
+
+							using var SW = new StreamWriter(
+								path: Path.GetFullPath(
+									Path.Combine(
+										Path.GetDirectoryName(user_path),
+										$"{Path.GetFileNameWithoutExtension(user_path)}_data",
+										fileName
+										)
+									),
+								append: false,
+								encoding: Encoding.UTF8
+								);
+
+							foreach (string str in fileString)
+							{
+								SW.WriteLine(str);
+							}
+							// Console.Out.WriteLine("Exported file: {0}", fileName);
 						}
-					}
-					catch (Exception ex)
-					{
-						Console.Error.WriteLine("Thread {0} - ID: {1}\n{2}", Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex);
-					}
-					
-				}));
+						catch (Exception ex)
+						{
+							Console.Error.WriteLine("Thread {0} - ID: {1}\n{2}", Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex);
+						}
+					}));
 			}
 
-			PendingOperationMessage("Awaiting completion of file operations", tskIO);
-			foreach (var item in tskIO)
-			{
-				await (item as Task);
-			}
-			
+			await PendingOperationMessage("Processing...", tskWorker);
+
 			Console.WriteLine("\n-------------------------------------------\nEnd of program");
 			Console.ReadKey(true);
 		}
 
-		static void PendingOperationMessage(string message, List<IAsyncResult> tasks)
+		static async Task PendingOperationMessage(string message, List<IAsyncResult> tasks)
 		{
-			Console.Write(message);
-			Console.CursorVisible = false;
+			string[] rotate = { @"(-)", @"(\)", @"(|)", @"(/)" };
+			int cntr = 0;
 
-			(int x, int y) = Console.GetCursorPosition();
+			Console.CursorVisible = false;
+			
 			foreach (var task in tasks)
 			{
-				byte cntr = 0;
 				while (!task.IsCompleted)
 				{
-					Console.Write(".  ");
-					Thread.Sleep(200);
-					if (cntr > 2)
+					lock (Console.Out)
 					{
-						cntr = 0;
-						Console.SetCursorPosition(x, y);
-						Console.Write("   ");
-						Console.SetCursorPosition(x, y);
+						//Console.Out.WriteLine();
+						Console.Out.WriteLine($"{message} {rotate[cntr]}");
+						(int x, int y) = Console.GetCursorPosition();
+						Console.SetCursorPosition(0, y - 2);
+						cntr = ++cntr % rotate.Length;
 					}
-					else
-					{
-						Console.SetCursorPosition(x + cntr, y);
-						cntr++;
-					}
+					Thread.Sleep(200);	
 				}
-				Console.SetCursorPosition(x, y);
+
+				await (task as Task); // Necessary?
+				(task as IDisposable).Dispose();
 			}
 
-			Console.WriteLine("\tDone!");
 			Console.CursorVisible = true;
 		}
 	}

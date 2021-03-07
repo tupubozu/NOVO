@@ -36,7 +36,7 @@ namespace NOVO.Waveform
 
 			relativeThresholdVoltage = 495.0;
 			removeThresholdVoltage = 5.0;
-			trimOffset = 15;
+			trimOffset = 10;
 		}
 
 		public bool IsOutOfRange 
@@ -98,12 +98,19 @@ namespace NOVO.Waveform
 		{
 			for (int i = trimOffset; i < channel.Samples.Count; i++)
 			{
-				double temp = 0.0;
+				double temp_prev = 0.0;
 				for (int j = i - trimOffset; j < i; j++)
 				{
-					temp += channel.Samples[j].VoltageComponent;
+					temp_prev += channel.Samples[j].VoltageComponent;
 				}
-				if (Math.Abs(channel.Samples[i].VoltageComponent) > (Math.Abs(temp / trimOffset) + removeThresholdVoltage))
+
+				double temp_next = 0.0;
+				for (int j = i + trimOffset; j > i; j--)
+				{
+					temp_next += channel.Samples[j].VoltageComponent;
+				}
+
+				if (Math.Abs(temp_next / trimOffset) > (Math.Abs(temp_prev / trimOffset) + removeThresholdVoltage))
 				{
 					channel.Samples.RemoveRange(0, i - trimOffset);
 					return;
@@ -121,12 +128,18 @@ namespace NOVO.Waveform
 		{
 			for (int i = channel.Samples.Count - trimOffset - 1; i >= 0; i--)
 			{
-				double temp = 0.0;
+				double temp_prev = 0.0;
 				for (int j = i + trimOffset; j > i; j--)
 				{
-					temp += channel.Samples[j].VoltageComponent;
+					temp_prev += channel.Samples[j].VoltageComponent;
 				}
-				if (Math.Abs(channel.Samples[i].VoltageComponent) > (Math.Abs(temp / trimOffset) + removeThresholdVoltage))
+				double temp_next = 0.0;
+				for (int j = i - trimOffset; j < i; j++)
+				{
+					temp_next += channel.Samples[j].VoltageComponent;
+				}
+
+				if (Math.Abs(temp_next / trimOffset) > (Math.Abs(temp_prev / trimOffset) + removeThresholdVoltage))
 				{
 					channel.Samples.RemoveRange(i + trimOffset, channel.Samples.Count - (i + trimOffset) - 1);
 					return;
