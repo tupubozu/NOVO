@@ -139,7 +139,7 @@ namespace NOVO
 						//Console.Out.WriteLine();
 						Console.Out.WriteLine($"{message} {rotate[cntr]}");
 						(int x, int y) = Console.GetCursorPosition();
-						Console.SetCursorPosition(0, y - 2);
+						Console.SetCursorPosition(0, y - 1);
 						cntr = ++cntr % rotate.Length;
 					}
 					Thread.Sleep(200);	

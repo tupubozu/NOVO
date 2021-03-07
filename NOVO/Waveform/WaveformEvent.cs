@@ -35,8 +35,8 @@ namespace NOVO.Waveform
 			};
 
 			relativeThresholdVoltage = 495.0;
-			removeThresholdVoltage = 5.0;
-			trimOffset = 10;
+			removeThresholdVoltage = 7.5;
+			trimOffset = 15;
 		}
 
 		public bool IsOutOfRange 
