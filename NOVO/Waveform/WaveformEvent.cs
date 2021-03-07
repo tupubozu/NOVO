@@ -39,9 +39,9 @@ namespace NOVO.Waveform
 			trimOffset = 15;
 		}
 
-		public bool IsOutOfRange 
-		{ 
-			get 
+		public bool IsOutOfRange
+		{
+			get
 			{
 				bool temp = false;
 				Task[] workers = new Task[Channels.Count];
@@ -76,10 +76,10 @@ namespace NOVO.Waveform
 					{
 						worker.Dispose();
 					}
-				}			
+				}
 
 				return temp;
-			} 
+			}
 		}
 
 		public void Trim()
@@ -171,7 +171,7 @@ namespace NOVO.Waveform
 		{
 			foreach (WaveformData channel in Channels)
 			{
-				channel.ShiftTime(timeDifference); 
+				channel.ShiftTime(timeDifference);
 			}
 		}
 
@@ -182,7 +182,7 @@ namespace NOVO.Waveform
 			foreach (WaveformData channel in Channels)
 			{
 				if (channel.Samples[0].TimeComponent < startTime)
-					 startTime = channel.Samples[0].TimeComponent;
+					startTime = channel.Samples[0].TimeComponent;
 			}
 			foreach (WaveformData channel in Channels)
 			{
@@ -192,7 +192,7 @@ namespace NOVO.Waveform
 			return ToCSV(startTime, stopTime, sample_time);
 		}
 
-			public string ToCSV(double start_time, double stop_time, double sample_time)
+		public string ToCSV(double start_time, double stop_time, double sample_time)
 		{
 			int digits = (int)Math.Round(Math.Abs(Math.Log10(sample_time)) + 0.5, 0);
 
@@ -205,7 +205,7 @@ namespace NOVO.Waveform
 			}
 			output_str += "\n";
 
-			for (double i = start_time;  i < stop_time; i += sample_time)
+			for (double i = start_time; i < stop_time; i += sample_time)
 			{
 				i = Math.Round(i, digits);
 				string temp_str = string.Format("\"{0}\",", i.ToString(numberFormat));
@@ -218,7 +218,7 @@ namespace NOVO.Waveform
 
 				output_str += temp_str;
 			}
-			
+
 			return output_str;
 		}
 
@@ -245,16 +245,16 @@ namespace NOVO.Waveform
 
 			List<Task<string>> tskOutput = new();
 
-			tskOutput.Add( Task.Run( () =>
-			{
-				string output_str = "\"Time\",";
-				for (int j = 0; j < Channels.Count; j++)
-				{
-					output_str += $"\"Channel {j + 1}\"";
-					if (j < (Channels.Count - 1)) output_str += ",";
-				}
-				return output_str;
-			}));
+			tskOutput.Add(Task.Run(() =>
+		  {
+			  string output_str = "\"Time\",";
+			  for (int j = 0; j < Channels.Count; j++)
+			  {
+				  output_str += $"\"Channel {j + 1}\"";
+				  if (j < (Channels.Count - 1)) output_str += ",";
+			  }
+			  return output_str;
+		  }));
 
 			for (double i = start_time; i < stop_time; i += sample_time)
 			{
@@ -282,7 +282,7 @@ namespace NOVO.Waveform
 				output[i] = await tskOutput[i];
 				tskOutput[i].Dispose();
 			}
-			
+
 			return output;
 		}
 	}

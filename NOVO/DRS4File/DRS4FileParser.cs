@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace NOVO.DRS4File
@@ -210,7 +210,7 @@ namespace NOVO.DRS4File
 			SortedDictionary<long, DRS4FileFlag> FileFlags = new SortedDictionary<long, DRS4FileFlag>();
 
 			FileFlags.Add(0, DRS4FileFlag.File);
-			
+
 			long temp_pos = file.Position;
 			file.Position = 4;
 			while (file.Position < file.Length)

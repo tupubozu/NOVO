@@ -1,27 +1,27 @@
-﻿using System;
+﻿using NOVO.Waveform;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using NOVO.Waveform;
 
 namespace NOVO.DRS4File
 {
 	public class DRS4FileData
 	{
 		// DRS4FileData is a 1 to 1 representation of the binary file made by a DRS4 board.
-		 
+
 		public byte Version;
 		public DRS4Time Time;
 		public List<DRS4Event> Events;
 
 		public override string ToString()
 		{
-			string output = string.Join('\n', 
+			string output = string.Join('\n',
 				base.ToString(),
 				string.Format("\tFile version: {0}", this.Version),
 				string.Format("\tBoard number: {0}", this.Time.BoardNumber),
 				string.Format("\tNumber of events: {0}", this.Events.Count)
 				);
-			return output; 
+			return output;
 		}
 
 		public List<WaveformEvent> ToWaveformEvents()
@@ -33,7 +33,7 @@ namespace NOVO.DRS4File
 				if (event_item.BoardNumber == this.Time.BoardNumber)
 					output.Add(ToWaveformEvent(event_item, this.Time));
 			}
-			
+
 			foreach (WaveformEvent item in output)
 			{
 				item.NormalizeTime();
@@ -51,7 +51,7 @@ namespace NOVO.DRS4File
 			foreach (DRS4Event event_item in this.Events)
 			{
 				if (event_item.BoardNumber == this.Time.BoardNumber)
-					tskOutput.Add(Task.Run( () => ToWaveformEvent(event_item, this.Time)));
+					tskOutput.Add(Task.Run(() => ToWaveformEvent(event_item, this.Time)));
 			}
 
 			List<WaveformEvent> output = new();
@@ -102,7 +102,7 @@ namespace NOVO.DRS4File
 				for (int i = 0; i < ed.Voltage.Length; i++)
 				{
 					double timeComponent = 0;
-					
+
 					DRS4TimeData temp_time_data = null;
 					foreach (DRS4TimeData data_item in t.TimeData)
 					{
@@ -125,12 +125,12 @@ namespace NOVO.DRS4File
 					 *	Should 'j' have started at -1 and ended at 'i' instead???
 					 */
 
-					for (int j = 0; j <= i; j++) 
+					for (int j = 0; j <= i; j++)
 					{
 						timeComponent += temp_time_data.Data[(j + e.TriggerCell) % temp_time_data.Data.Length];
 					}
 
-					temp.Samples.Add(new(timeComponent, ((1000.0 * ed.Voltage[i]) / ushort.MaxValue) - 500 + e.RangeCenter )); 
+					temp.Samples.Add(new(timeComponent, ((1000.0 * ed.Voltage[i]) / ushort.MaxValue) - 500 + e.RangeCenter));
 				}
 				waveformEvent.Channels.Add(temp);
 			}
@@ -148,7 +148,7 @@ namespace NOVO.DRS4File
 	public class DRS4TimeData
 	{
 		// DRS4TimeData a representation of the channel spesific information found after the "TIME"-header inside a DRS4 binary file.
-		
+
 		public byte ChannelNumber;
 		public float[] Data;
 	}

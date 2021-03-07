@@ -1,12 +1,11 @@
-﻿using System;
+﻿using NOVO.DRS4File;
+using NOVO.Waveform;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Text.Json.Serialization;
-using System.Collections.Generic;
-using NOVO.DRS4File;
-using NOVO.Waveform;
 
 namespace NOVO
 {
@@ -85,36 +84,36 @@ namespace NOVO
 			List<IAsyncResult> tskWorker = new();
 			foreach (WaveformEvent waveformEvent in Waves)
 			{
-				tskWorker.Add(Task.Run( async() =>
-					{
-						try
-						{
-							string[] fileString = await waveformEvent.ToCSVAsync(0.1);
-							string fileName = $"DRS4_{waveformEvent.BoardNumber}_{waveformEvent.EventDateTime.ToString("yyyy-MM-dd_HHmmssfff")}_{waveformEvent.SerialNumber}.csv";
+				tskWorker.Add(Task.Run(async () =>
+				   {
+					   try
+					   {
+						   string[] fileString = await waveformEvent.ToCSVAsync(0.1);
+						   string fileName = $"DRS4_{waveformEvent.BoardNumber}_{waveformEvent.EventDateTime.ToString("yyyy-MM-dd_HHmmssfff")}_{waveformEvent.SerialNumber}.csv";
 
-							using var SW = new StreamWriter(
-								path: Path.GetFullPath(
-									Path.Combine(
-										Path.GetDirectoryName(user_path),
-										$"{Path.GetFileNameWithoutExtension(user_path)}_data",
-										fileName
-										)
-									),
-								append: false,
-								encoding: Encoding.UTF8
-								);
+						   using var SW = new StreamWriter(
+							   path: Path.GetFullPath(
+								   Path.Combine(
+									   Path.GetDirectoryName(user_path),
+									   $"{Path.GetFileNameWithoutExtension(user_path)}_data",
+									   fileName
+									   )
+								   ),
+							   append: false,
+							   encoding: Encoding.UTF8
+							   );
 
-							foreach (string str in fileString)
-							{
-								SW.WriteLine(str);
-							}
+						   foreach (string str in fileString)
+						   {
+							   SW.WriteLine(str);
+						   }
 							// Console.Out.WriteLine("Exported file: {0}", fileName);
 						}
-						catch (Exception ex)
-						{
-							Console.Error.WriteLine("Thread {0} - ID: {1}\n{2}", Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex);
-						}
-					}));
+					   catch (Exception ex)
+					   {
+						   Console.Error.WriteLine("Thread {0} - ID: {1}\n{2}", Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex);
+					   }
+				   }));
 			}
 
 			await PendingOperationMessage("Processing...", tskWorker);
@@ -129,7 +128,7 @@ namespace NOVO
 			int cntr = 0;
 
 			Console.CursorVisible = false;
-			
+
 			foreach (var task in tasks)
 			{
 				while (!task.IsCompleted)
@@ -142,7 +141,7 @@ namespace NOVO
 						Console.SetCursorPosition(0, y - 1);
 						cntr = ++cntr % rotate.Length;
 					}
-					Thread.Sleep(200);	
+					Thread.Sleep(200);
 				}
 
 				await (task as Task); // Necessary?
