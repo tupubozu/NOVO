@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace NOVO.Waveform
@@ -44,39 +45,57 @@ namespace NOVO.Waveform
 			get
 			{
 				bool temp = false;
-				Task[] workers = new Task[Channels.Count];
-				for (int i = 0; i < Channels.Count; i++)
+				
+                Task<bool>[] workers = new Task<bool>[Channels.Count];
+                using CancellationTokenSource tokenSource = new();
+                CancellationToken token = tokenSource.Token;
+                TaskFactory<bool> tskFactory = new(token);
+				
+                for (int i = 0; i < Channels.Count; i++)
 				{
 					int alias_i = i;
-					workers[i] = Task.Run(() =>
+					workers[i] = tskFactory.StartNew(() =>
 					{
 						foreach (WaveformSample sample in Channels[alias_i].Samples)
 						{
-							if (sample.VoltageComponent > RangeCenter + relativeThresholdVoltage || sample.VoltageComponent < RangeCenter - relativeThresholdVoltage)
+                            if (temp)
+                            {
+                                tokenSource.Cancel();
+                                return true;
+                            }
+							else if (sample.VoltageComponent > RangeCenter + relativeThresholdVoltage || sample.VoltageComponent < RangeCenter - relativeThresholdVoltage)
 							{
-								temp = temp || true;
-								return;
+								return true;
 							}
 						}
-					}
+						return false;
+					}, token
 					);
 				}
 
-				foreach (Task worker in workers)
-				{
 					try
 					{
-						worker.Wait(new System.Threading.CancellationToken(temp));
+                        using Task<bool> worker = tskFactory.ContinueWhenAll(workers, (tskArr) => 
+                        {
+                            bool result = false;
+                            foreach(var tsk in tskArr)
+                            {
+                                result = result || tsk.Result;
+                            }
+                            return result;
+                        });
+                            
+                        temp = worker.GetAwaiter().GetResult();
 					}
-					catch (Exception /*ex*/)
+					catch (AggregateException agex)
 					{
-						//Console.Error.WriteLine(ex.Message);
+						foreach(Exception ex in agex.InnerExceptions) Console.Error.WriteLine(ex.Message);
 					}
 					finally
 					{
-						worker.Dispose();
+                        foreach(var worker in workers)
+                            worker.Dispose();
 					}
-				}
 
 				return temp;
 			}
