@@ -45,24 +45,24 @@ namespace NOVO.Waveform
 			get
 			{
 				bool temp = false;
-				
-                Task<bool>[] workers = new Task<bool>[Channels.Count];
-                using CancellationTokenSource tokenSource = new();
-                CancellationToken token = tokenSource.Token;
-                TaskFactory<bool> tskFactory = new(token);
-				
-                for (int i = 0; i < Channels.Count; i++)
+
+				Task<bool>[] workers = new Task<bool>[Channels.Count];
+				using CancellationTokenSource tokenSource = new();
+				CancellationToken token = tokenSource.Token;
+				TaskFactory<bool> tskFactory = new(token);
+
+				for (int i = 0; i < Channels.Count; i++)
 				{
 					int alias_i = i;
 					workers[i] = tskFactory.StartNew(() =>
 					{
 						foreach (WaveformSample sample in Channels[alias_i].Samples)
 						{
-                            if (temp)
-                            {
-                                tokenSource.Cancel();
-                                return true;
-                            }
+							if (temp)
+							{
+								tokenSource.Cancel();
+								return true;
+							}
 							else if (sample.VoltageComponent > RangeCenter + relativeThresholdVoltage || sample.VoltageComponent < RangeCenter - relativeThresholdVoltage)
 							{
 								return true;
@@ -75,17 +75,17 @@ namespace NOVO.Waveform
 
 					try
 					{
-                        using Task<bool> worker = tskFactory.ContinueWhenAll(workers, (tskArr) => 
-                        {
-                            bool result = false;
-                            foreach(var tsk in tskArr)
-                            {
-                                result = result || tsk.Result;
-                            }
-                            return result;
-                        });
-                            
-                        temp = worker.GetAwaiter().GetResult();
+						using Task<bool> worker = tskFactory.ContinueWhenAll(workers, (tskArr) => 
+						{
+							bool result = false;
+							foreach(var tsk in tskArr)
+							{
+								result = result || tsk.Result;
+							}
+							return result;
+						});
+
+						temp = worker.GetAwaiter().GetResult();
 					}
 					catch (AggregateException agex)
 					{
@@ -93,8 +93,8 @@ namespace NOVO.Waveform
 					}
 					finally
 					{
-                        foreach(var worker in workers)
-                            worker.Dispose();
+						foreach(var worker in workers)
+							worker.Dispose();
 					}
 
 				return temp;
