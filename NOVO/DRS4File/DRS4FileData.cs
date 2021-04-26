@@ -65,8 +65,8 @@ namespace NOVO.DRS4File
 			foreach (WaveformEvent item in output)
 			{
 				item.NormalizeTime();
-				item.Trim();
-				if (item.IsOutOfRange)
+				if (ParserOptions.Trim) item.Trim();
+				if (item.IsOutOfRange && ParserOptions.Exclude)
 					removeableEvents.Add(item);
 			}
 

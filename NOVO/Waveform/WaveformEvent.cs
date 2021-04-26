@@ -44,60 +44,17 @@ namespace NOVO.Waveform
 		{
 			get
 			{
-				bool temp = false;
-
-				Task<bool>[] workers = new Task<bool>[Channels.Count];
-				using CancellationTokenSource tokenSource = new();
-				CancellationToken token = tokenSource.Token;
-				TaskFactory<bool> tskFactory = new(token);
-
 				for (int i = 0; i < Channels.Count; i++)
 				{
-					int alias_i = i;
-					workers[i] = tskFactory.StartNew(() =>
+					foreach (WaveformSample sample in Channels[i].Samples)
 					{
-						foreach (WaveformSample sample in Channels[alias_i].Samples)
+						if (sample.VoltageComponent > RangeCenter + relativeThresholdVoltage || sample.VoltageComponent < RangeCenter - relativeThresholdVoltage)
 						{
-							if (temp)
-							{
-								tokenSource.Cancel();
-								return true;
-							}
-							else if (sample.VoltageComponent > RangeCenter + relativeThresholdVoltage || sample.VoltageComponent < RangeCenter - relativeThresholdVoltage)
-							{
-								return true;
-							}
+							return true;
 						}
-						return false;
-					}, token
-					);
+					}
 				}
-
-					try
-					{
-						using Task<bool> worker = tskFactory.ContinueWhenAll(workers, (tskArr) => 
-						{
-							bool result = false;
-							foreach(var tsk in tskArr)
-							{
-								result = result || tsk.Result;
-							}
-							return result;
-						});
-
-						temp = worker.GetAwaiter().GetResult();
-					}
-					catch (AggregateException agex)
-					{
-						foreach(Exception ex in agex.InnerExceptions) Console.Error.WriteLine(ex.Message);
-					}
-					finally
-					{
-						foreach(var worker in workers)
-							worker.Dispose();
-					}
-
-				return temp;
+				return false;
 			}
 		}
 
@@ -118,20 +75,20 @@ namespace NOVO.Waveform
 			for (int i = trimOffset; i < channel.Samples.Count; i++)
 			{
 				double temp_prev = 0.0;
-				for (int j = i - trimOffset; j < i; j++)
+				for (int j = i - trimOffset; j < i && j < channel.Samples.Count; j++)
 				{
 					temp_prev += channel.Samples[j].VoltageComponent;
 				}
 
 				double temp_next = 0.0;
-				for (int j = i + trimOffset; j > i; j--)
+				for (int j = i; j < i + trimOffset && j < channel.Samples.Count; j++)
 				{
 					temp_next += channel.Samples[j].VoltageComponent;
 				}
 
 				if (Math.Abs(temp_next / trimOffset) > (Math.Abs(temp_prev / trimOffset) + removeThresholdVoltage))
 				{
-					channel.Samples.RemoveRange(0, i - trimOffset);
+					if (i - trimOffset > 0) channel.Samples.RemoveRange(0, i - trimOffset);
 					return;
 				}
 			}
@@ -148,12 +105,12 @@ namespace NOVO.Waveform
 			for (int i = channel.Samples.Count - trimOffset - 1; i >= 0; i--)
 			{
 				double temp_prev = 0.0;
-				for (int j = i + trimOffset; j > i; j--)
+				for (int j = i + trimOffset; j > i && j >= 0; j--)
 				{
 					temp_prev += channel.Samples[j].VoltageComponent;
 				}
 				double temp_next = 0.0;
-				for (int j = i - trimOffset; j < i; j++)
+				for (int j = i; j > i - trimOffset && j >= 0; j--)
 				{
 					temp_next += channel.Samples[j].VoltageComponent;
 				}

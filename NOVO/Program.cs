@@ -13,6 +13,8 @@ namespace NOVO
 	{
 		static async Task Main(string[] args)
 		{
+			ParserOptions.SetOptions(args);
+
 			Console.WriteLine("NOVO-project DRS4 binary file parser/reader");
 			Console.WriteLine("-------------------------------------------");
 
