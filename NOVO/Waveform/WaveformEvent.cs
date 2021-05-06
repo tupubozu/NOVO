@@ -86,7 +86,7 @@ namespace NOVO.Waveform
 					temp_next += channel.Samples[j].VoltageComponent;
 				}
 
-				if (Math.Abs(temp_next / trimOffset) > (Math.Abs(temp_prev / trimOffset) + removeThresholdVoltage))
+				if ((Math.Abs(temp_next / trimOffset) > (Math.Abs(temp_prev / trimOffset) + removeThresholdVoltage)) && (Math.Abs(channel.Samples[i].VoltageComponent) >= 50.0))
 				{
 					if (i - trimOffset > 0) channel.Samples.RemoveRange(0, i - trimOffset);
 					return;
@@ -115,7 +115,7 @@ namespace NOVO.Waveform
 					temp_next += channel.Samples[j].VoltageComponent;
 				}
 
-				if (Math.Abs(temp_next / trimOffset) > (Math.Abs(temp_prev / trimOffset) + removeThresholdVoltage))
+				if ((Math.Abs(temp_next / trimOffset) > (Math.Abs(temp_prev / trimOffset) + removeThresholdVoltage)) && (Math.Abs(channel.Samples[i].VoltageComponent) >= 50.0))
 				{
 					channel.Samples.RemoveRange(i + trimOffset, channel.Samples.Count - (i + trimOffset) - 1);
 					return;

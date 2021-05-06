@@ -91,7 +91,7 @@ namespace NOVO
 					   try
 					   {
 						   string[] fileString = await waveformEvent.ToCSVAsync(0.1);
-						   string fileName = $"DRS4_{waveformEvent.BoardNumber}_{waveformEvent.EventDateTime.ToString("yyyy-MM-dd_HHmmssfff")}_{waveformEvent.SerialNumber}.csv";
+						   string fileName = $"DRS4_{waveformEvent.BoardNumber}_{waveformEvent.EventDateTime.ToString("yyyy-MM-dd_HHmmssffff")}_{waveformEvent.SerialNumber}.csv";
 
 						   using var SW = new StreamWriter(
 							   path: Path.GetFullPath(
@@ -120,8 +120,10 @@ namespace NOVO
 
 			await PendingOperationMessage("Processing...", tskWorker);
 
+#if DEBUG
 			Console.WriteLine("\n-------------------------------------------\nEnd of program");
 			Console.ReadKey(true);
+#endif
 		}
 
 		static async Task PendingOperationMessage(string message, List<IAsyncResult> tasks)

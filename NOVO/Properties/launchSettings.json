@@ -2,7 +2,7 @@
   "profiles": {
     "NOVO": {
       "commandName": "Project",
-      "commandLineArgs": "--exclude=false"
+      "commandLineArgs": "--exclude=true"
     }
   }
 }
