@@ -3,10 +3,12 @@ using System.Collections.Generic;
 
 namespace NOVO.Waveform
 {
+
+	/// <summary>
+	/// WaveformData is an abstraction of waveforms and their associated channels.
+	/// </summary>
 	public class WaveformData : IComparable<WaveformData>, IComparer<WaveformData>
 	{
-		// WaveformData is an abstraction of waveforms and their associated channels.
-
 		public byte ChannelNumber;
 		public List<WaveformSample> Samples;
 
@@ -47,10 +49,11 @@ namespace NOVO.Waveform
 		}
 	}
 
+	/// <summary>
+	/// Represents an individual sample of a waveform.
+	/// </summary>
 	public class WaveformSample
 	{
-		// Represents an individual sample of a waveform.
-
 		private double timeComponent;
 		public double TimeComponent
 		{

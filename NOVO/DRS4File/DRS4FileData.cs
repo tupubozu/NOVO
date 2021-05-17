@@ -5,10 +5,11 @@ using System.Threading.Tasks;
 
 namespace NOVO.DRS4File
 {
+	/// <summary>
+	/// DRS4FileData is a 1 to 1 representation of the binary file made by a DRS4 board.
+	/// </summary>
 	public class DRS4FileData
 	{
-		// DRS4FileData is a 1 to 1 representation of the binary file made by a DRS4 board.
-
 		public byte Version;
 		public DRS4Time Time;
 		public List<DRS4Event> Events;
@@ -109,6 +110,7 @@ namespace NOVO.DRS4File
 						if (data_item.ChannelNumber == temp.ChannelNumber) temp_time_data = data_item;
 					}
 
+#warning Possible logic error
 					/*	Possible logic error. 
 					 *	"DRS4 Evaluation BoardUser’s ManualBoard Revision 5.1" specifies summation from j = 0 to j = i - 1.
 					 *	
@@ -138,24 +140,30 @@ namespace NOVO.DRS4File
 			return waveformEvent;
 		}
 	}
+
+	/// <summary>
+	/// DRS4Time is a representation of the data found in/after the "TIME"-header inside a DRS4 binary file.
+	/// </summary>
 	public class DRS4Time
 	{
-		// DRS4Time is a representation of the data found in/after the "TIME"-header inside a DRS4 binary file.
-
 		public ushort BoardNumber;
 		public List<DRS4TimeData> TimeData;
 	}
+
+	/// <summary>
+	/// DRS4TimeData a representation of the channel spesific information found after the "TIME"-header inside a DRS4 binary file.
+	/// </summary>
 	public class DRS4TimeData
 	{
-		// DRS4TimeData a representation of the channel spesific information found after the "TIME"-header inside a DRS4 binary file.
-
 		public byte ChannelNumber;
 		public float[] Data;
 	}
+
+	/// <summary>
+	/// DRS4Event is a representation of the data found in/after an "EHDR"-header inside a DRS4 binary file.
+	/// </summary>
 	public class DRS4Event
 	{
-		// DRS4Event is a representation of the data found in/after an "EHDR"-header inside a DRS4 binary file.
-
 		public uint EventSerialNumber;
 
 		public DateTime EventTime;
@@ -166,10 +174,12 @@ namespace NOVO.DRS4File
 
 		public List<DRS4EventData> EventData;
 	}
+
+	/// <summary>
+	/// DRS4EventData a representation of the channel spesific information found after the "EHDR"-header inside a DRS4 binary file.
+	/// </summary>
 	public class DRS4EventData
 	{
-		// DRS4EventData a representation of the channel spesific information found after the "EHDR"-header inside a DRS4 binary file.
-
 		public byte ChannelNumber;
 		public int Scaler;
 		public ushort[] Voltage;

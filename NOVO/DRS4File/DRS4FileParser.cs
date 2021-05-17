@@ -28,6 +28,11 @@ namespace NOVO.DRS4File
 			return new DRS4FileParser(stream);
 		}
 
+#warning Refactor: Implement more extensive validation based on header offsets.
+		/// <summary>
+		/// Method to validate DRS4 binary data file.
+		/// </summary>
+		/// <returns>True if valid, else false.</returns>
 		public bool Validate()
 		{
 			byte[] file_word = new byte[4];
@@ -122,7 +127,13 @@ namespace NOVO.DRS4File
 			return Data;
 		}
 
-		private DRS4Time ParseTime(byte[] data) // Argument data is array of bytes between two event headers, not including the headers
+		/// <summary>
+		/// Parses binary data from a byte array into a DRS4Time object, based on then DRS4 binary data format.
+		/// For use data after "TIME" headers.
+		/// </summary>
+		/// <param name="data">Array of bytes between two time headers, not including the headers</param>
+		/// <returns>DRS4 binary data as a DRS4Time</returns>
+		private DRS4Time ParseTime(byte[] data)
 		{
 			DRS4Time time = new()
 			{
@@ -157,7 +168,13 @@ namespace NOVO.DRS4File
 			return time;
 		}
 
-		private DRS4Event ParseEvent(byte[] data) // Argument data is array of bytes between two event headers, not including the headers
+		/// <summary>
+		/// Parses binary data from a byte array into a DRS4Event object, based on then DRS4 binary data format.
+		/// For use data after "EVNT" headers.
+		/// </summary>
+		/// <param name="data">Array of bytes between two event headers, not including the headers</param>
+		/// <returns>DRS4 binary data as a DRS4Event</returns>
+		private DRS4Event ParseEvent(byte[] data) 
 		{
 			DRS4Event @event = new()
 			{
@@ -205,6 +222,10 @@ namespace NOVO.DRS4File
 			return @event;
 		}
 
+		/// <summary>
+		/// Makes a dictionary of headers and their position in the stream/file.
+		/// </summary>
+		/// <returns>Sorted dictionary with header start position as "key" and DRS4FileFlag enum value as "value"</returns>
 		private SortedDictionary<long, DRS4FileFlag> BuildDictionary()
 		{
 			SortedDictionary<long, DRS4FileFlag> FileFlags = new SortedDictionary<long, DRS4FileFlag>();
@@ -239,6 +260,12 @@ namespace NOVO.DRS4File
 			return FileFlags;
 		}
 
+		/// <summary>
+		/// Method to parse 4 bytes into a string.
+		/// Used to find headers in binary data file
+		/// </summary>
+		/// <param name="line">Byte array of length 4, form binary data file</param>
+		/// <returns>Parsed string</returns>
 		private string LineString(byte[] line)
 		{
 			return $"{Convert.ToChar(line[0])}{Convert.ToChar(line[1])}{Convert.ToChar(line[2])}{Convert.ToChar(line[3])}";
