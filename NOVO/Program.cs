@@ -16,40 +16,53 @@ namespace NOVO
 		/// <summary>
 		/// Entry point for "NOVO-Parser"
 		/// </summary>
-		/// <param name="args"></param>
+		/// <param name="args">Array of program argument strings</param>
 		/// <returns></returns>
 		static async Task Main(string[] args)
 		{
 			ParserOptions.SetOptions(args);
 			List<string> binaryFiles = ParserOptions.GetFiles(args);
 
-			Task tskProcess;
-			if (ParserOptions.Interactive)
+			
+			
+			if (ParserOptions.HelpText)
 			{
-				tskProcess = Task.Run(() => InteractiveMode());
+				Console.WriteLine("NOVO-project DRS4 binary file parser/reader \nUsage: [options] [files]");
+			}
+			else if (ParserOptions.Interactive)
+			{
+				using Task tskProcess = InteractiveMode();
+				await tskProcess;
 			}
 			else
 			{
 				Console.WriteLine("NOVO-project DRS4 binary file parser/reader");
-				tskProcess = Task.Run(() =>
+				if (binaryFiles.Count > 0)
 				{
-				   Task[] workers = new Task[binaryFiles.Count];
-				   for (int i = 0; i < binaryFiles.Count; i++)
-				   {
-					   workers[i] = Task.Run(() => CLIMode(binaryFiles[i]));
-				   }
 
-				   Task.WaitAll(workers);
-				   foreach (Task worker in workers)
-				   {
-					   worker.Dispose();
-				   }
-				});
+					List<Task> workers = new();
+					for (int i = 0; i < binaryFiles.Count; i++)
+					{
+						int alias_i = i;
+						workers.Add(Task.Run(() => CLIMode(binaryFiles[alias_i])));
+					}
+
+					using Task tskProcess = Task.WhenAll(workers.ToArray());
+					PendingOperationMessage("Processing...", tskProcess);
+					await tskProcess;
+
+					foreach (Task worker in workers)
+					{
+						await worker;
+						worker.Dispose();
+					}
+				}
+				else
+				{
+					Console.WriteLine("No files specified. Please pass at least one file path as an argument.\nSee --help for help.");
+				}
+				
 			}
-
-			PendingOperationMessage("Processing... ", tskProcess);
-			await tskProcess;
-			tskProcess.Dispose();
 
 #if DEBUG
 			Console.WriteLine("\n-------------------------------------------\nEnd of program");
@@ -68,12 +81,11 @@ namespace NOVO
 			string[] rotate = { @"(-)", @"(\)", @"(|)", @"(/)" };
 			int cntr = 0;
 
-			Console.CursorVisible = false;
-
 			while (!task.IsCompleted)
 			{
 				lock (Console.Out)
 				{
+					Console.CursorVisible = false;
 					//Console.Out.WriteLine();
 					Console.Out.WriteLine($"{message} {rotate[cntr]}");
 					(int x, int y) = Console.GetCursorPosition();
@@ -240,7 +252,7 @@ namespace NOVO
 
 			if (data != null)
 			{
-				Console.Out.WriteLine($"{file}\n{data}");
+				Console.Out.WriteLine($"{file}\n{data}\n");
 			}
 			else return;
 			
@@ -257,13 +269,7 @@ namespace NOVO
 				$"{Path.GetFileNameWithoutExtension(file)}_data"
 				);
 
-			Task[] workers = GetWorkers(targetPath, await tskWaves);
-
-			Task.WaitAll(workers);
-			foreach (Task worker in workers)
-			{
-				worker.Dispose();
-			}
+			using Task worker = GetWorkers(targetPath, await tskWaves);
 		}
 
 		/// <summary>
@@ -272,7 +278,7 @@ namespace NOVO
 		/// <param name="targetPath">Path to target directory or target Zip archive</param>
 		/// <param name="Waves">Data collection</param>
 		/// <returns>Array of Task objects handling async file operations.</returns>
-		static Task[] GetWorkers(string targetPath,List<WaveformEvent> Waves)
+		static Task GetWorkers(string targetPath,List<WaveformEvent> Waves)
 		{
 			List<Task> tskWorker = new();
 			try
@@ -284,6 +290,7 @@ namespace NOVO
 					{
 						tskWorker.Add(Task.Run(() => MulitFileOut(waveformEvent, targetPath)));
 					}
+					Task.WaitAll(tskWorker.ToArray());
 				}
 				else
 				{
@@ -297,6 +304,7 @@ namespace NOVO
 					{
 						tskWorker.Add(Task.Run(() => ZipFileOut(waveformEvent, archive)));
 					}
+					Task.WaitAll(tskWorker.ToArray());
 				}
 			}
 			catch (Exception ex)
@@ -304,7 +312,7 @@ namespace NOVO
 				Console.Out.WriteLine("Operation failed \nReason: {0}", ex.Message);
 				Console.Error.WriteLine(ex);
 			}
-			return tskWorker.ToArray();
+			return Task.CompletedTask;
 		}
 
 		/// <summary>
@@ -317,9 +325,8 @@ namespace NOVO
 			DRS4FileData data = null;
 			try
 			{
-				DRS4FileParser parser = null;
 				using var fileHandler = File.Open(filePath, FileMode.Open);
-				parser = DRS4FileParser.NewParser(fileHandler);
+				DRS4FileParser parser = DRS4FileParser.NewParser(fileHandler);
 				if (parser.Validate())
 				{
 					data = await parser.ParseAsync();
@@ -327,7 +334,11 @@ namespace NOVO
 			}
 			catch (Exception ex)
 			{
-				Console.Error.WriteLine(ex.ToString());
+#if DEBUG
+				Console.Error.WriteLine(ex);
+#else
+				Console.Error.WriteLine(ex.Message);
+#endif
 			}
 			return data;
 		}
@@ -377,27 +388,36 @@ namespace NOVO
 		{
 			try
 			{
-				using Task<string[]> tskFileString = Task.Run(() => waveformEvent.ToCSVAsync(0.1));
-				
+				Task<string[]> tskFileString = waveformEvent.ToCSVAsync(0.1);
+
 				string fileName = $"DRS4_{waveformEvent.BoardNumber}_{waveformEvent.EventDateTime.ToString("yyyy-MM-dd_HHmmssffff")}_{waveformEvent.SerialNumber}.csv";
 
-				ZipArchiveEntry fileEntry = targetArchive.CreateEntry(fileName, CompressionLevel.Optimal);
-
-				using var SW = new StreamWriter(
-					stream: fileEntry.Open(), 
-					encoding: Encoding.UTF8
-					);
-
 				string[] fileString = await tskFileString;
-				foreach (string str in fileString)
+
+				lock (targetArchive)
 				{
-					SW.WriteLine(str);
+					ZipArchiveEntry fileEntry = targetArchive.CreateEntry(fileName, CompressionLevel.Optimal);
+
+					using var SW = new StreamWriter(
+						stream: fileEntry.Open(),
+						encoding: Encoding.UTF8
+						);
+
+					foreach (string str in fileString)
+					{
+						SW.WriteLine(str);
+					}
 				}
+
 				// Console.Out.WriteLine("Exported file: {0}", fileName);
 			}
 			catch (Exception ex)
 			{
+#if DEBUG
 				Console.Error.WriteLine("Thread {0} - ID: {1}\n{2}", Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex);
+#else
+				Console.Error.WriteLine("Thread {0} - ID: {1}\n{2}", Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex.Message);
+#endif
 			}
 		}
 	}

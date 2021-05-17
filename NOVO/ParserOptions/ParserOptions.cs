@@ -35,15 +35,15 @@ namespace NOVO
 			{
 				if(arg.Contains("--exclude="))
 				{
-					Exclude = GetArgsBool(arg, Exclude);
+					Exclude = GetArgsBool(arg.Split('=')[1], Exclude);
 				}
 				else if (arg.Contains("--trim="))
 				{
-					Trim = GetArgsBool(arg, Trim);
+					Trim = GetArgsBool(arg.Split('=')[1], Trim);
 				}
 				else if (arg.Contains("--zip="))
 				{
-					ZipOutput = GetArgsBool(arg, ZipOutput);
+					ZipOutput = GetArgsBool(arg.Split('=')[1], ZipOutput);
 				}
 				else if (arg.Contains("-i"))
 				{
