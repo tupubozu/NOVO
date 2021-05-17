@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 
 namespace NOVO.Waveform
 {
+	/// <summary>
+	/// WaveformEvent is a high level abstraction of the DRS4Event and DRS4Time objects.
+	/// Its purpose is to contain sets of waveforms, with associated timestamps and voltages represented with floating point datatypes. 
+	/// </summary>
 	public class WaveformEvent : IComparable<WaveformEvent>, IComparer<WaveformEvent>
 	{
-		// WaveformEvent is a high level abstraction of the DRS4Event and DRS4Time objects.
-		// Its purpose is to contain sets of waveforms, with associated timestamps and voltages represented with floating point datatypes.  
-
 		private static double relativeThresholdVoltage;
 		private static double removeThresholdVoltage;
 		private static int trimOffset;
