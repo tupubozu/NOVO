@@ -268,8 +268,15 @@ namespace NOVO
 				Path.GetDirectoryName(file),
 				$"{Path.GetFileNameWithoutExtension(file)}_data"
 				);
+			
+			List<WaveformEvent> Waves = await tskWaves;
+			if (data.Events.Count > Waves.Count)
+			{
+				int temp = data.Events.Count - Waves.Count;
+				Console.WriteLine($"{file}\nExcluded {temp} event{((temp > 1)? "s": string.Empty)} due to ADC saturation\n");
+			}
 
-			using Task worker = GetWorkers(targetPath, await tskWaves);
+			using Task worker = GetWorkers(targetPath, Waves);
 		}
 
 		/// <summary>

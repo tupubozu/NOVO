@@ -18,11 +18,13 @@ namespace NOVO
 		public static bool HelpText { get; private set; }
 
 		public static bool Interactive { get; private set; }
+		public static double ThresholdVoltage { get; private set; }
 
 		public static readonly char[] TrimChars = { ' ', '\t', '\n', '\"', '\'' };
 		static ParserOptions()
 		{
-			(Trim, Exclude, ZipOutput, HelpText, Interactive) = (true, true, false, false, false);
+			(Trim, Exclude, ZipOutput, HelpText, Interactive) = (true, true, true, false, false);
+			ThresholdVoltage = 50.0;
 		}
 
 		/// <summary>
@@ -44,6 +46,10 @@ namespace NOVO
 				else if (arg.Contains("--zip="))
 				{
 					ZipOutput = GetArgsBool(arg.Split('=')[1], ZipOutput);
+				}
+				else if (arg.Contains("--threshold="))
+				{
+					ThresholdVoltage = GetArgsDouble(arg.Split('=')[1], ThresholdVoltage);
 				}
 				else if (arg.Contains("-i"))
 				{
@@ -68,6 +74,26 @@ namespace NOVO
 			try
 			{
 				temp = bool.Parse(arg);
+			}
+			catch (Exception)
+			{
+				temp = fallback_val;
+			}
+			return temp;
+		}
+
+		/// <summary>
+		/// General purpose argument parser method
+		/// </summary>
+		/// <param name="arg">Argument string</param>
+		/// <param name="fallback_val">Return value if parsing fails</param>
+		/// <returns>Argument as double</returns>
+		private static double GetArgsDouble(string arg, double fallback_val)
+		{
+			double temp = 0.0;
+			try
+			{
+				temp = double.Parse(arg);
 			}
 			catch (Exception)
 			{

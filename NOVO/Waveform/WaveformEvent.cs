@@ -13,7 +13,6 @@ namespace NOVO.Waveform
 	public class WaveformEvent : IComparable<WaveformEvent>, IComparer<WaveformEvent>
 	{
 		private static double relativeThresholdVoltage;
-		private static double removeThresholdVoltage;
 		private static int trimOffset;
 
 		public DateTime EventDateTime;
@@ -36,8 +35,7 @@ namespace NOVO.Waveform
 				PercentDecimalSeparator = "."
 			};
 
-			relativeThresholdVoltage = 495.0;
-			removeThresholdVoltage = 7.5;
+			relativeThresholdVoltage = 499.98;
 			trimOffset = 15;
 		}
 
@@ -87,7 +85,7 @@ namespace NOVO.Waveform
 					temp_next += channel.Samples[j].VoltageComponent;
 				}
 
-				if ((Math.Abs(temp_next / trimOffset) > (Math.Abs(temp_prev / trimOffset) + removeThresholdVoltage)) && (Math.Abs(channel.Samples[i].VoltageComponent) >= 50.0))
+				if ((Math.Abs(temp_next / trimOffset) > Math.Abs(temp_prev / trimOffset)) && (Math.Abs(channel.Samples[i].VoltageComponent) >= ParserOptions.ThresholdVoltage))
 				{
 					if (i - trimOffset > 0) channel.Samples.RemoveRange(0, i - trimOffset);
 					return;
@@ -116,7 +114,7 @@ namespace NOVO.Waveform
 					temp_next += channel.Samples[j].VoltageComponent;
 				}
 
-				if ((Math.Abs(temp_next / trimOffset) > (Math.Abs(temp_prev / trimOffset) + removeThresholdVoltage)) && (Math.Abs(channel.Samples[i].VoltageComponent) >= 50.0))
+				if ((Math.Abs(temp_next / trimOffset) > Math.Abs(temp_prev / trimOffset)) && (Math.Abs(channel.Samples[i].VoltageComponent) >= ParserOptions.ThresholdVoltage))
 				{
 					channel.Samples.RemoveRange(i + trimOffset, channel.Samples.Count - (i + trimOffset) - 1);
 					return;
