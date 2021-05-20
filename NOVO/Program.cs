@@ -277,7 +277,11 @@ namespace NOVO
 			}
 			catch (Exception ex)
 			{
+#if DEBUG
 				Console.Error.WriteLine("Thread {0} - ID: {1}\n{2}", Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex);
+#else
+				Console.Error.WriteLine("Thread {0} - ID: {1}\n{2}", Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex.Message);
+#endif
 			}
 		}
 
