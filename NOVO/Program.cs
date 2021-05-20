@@ -98,37 +98,6 @@ namespace NOVO
 			Console.CursorVisible = true;
 		}
 
-#warning Deprecated method: static async Task PendingOperationMessage(string message, List<IAsyncResult> tasks)
-		static async Task PendingOperationMessage(string message, List<IAsyncResult> tasks)
-		{
-			string[] rotate = { @"(-)", @"(\)", @"(|)", @"(/)" };
-			int cntr = 0;
-
-			Console.CursorVisible = false;
-
-			foreach (var task in tasks)
-			{
-				while (!task.IsCompleted)
-				{
-					lock (Console.Out)
-					{
-						//Console.Out.WriteLine();
-						Console.Out.WriteLine($"{message} {rotate[cntr]}");
-						(int x, int y) = Console.GetCursorPosition();
-						Console.SetCursorPosition(0, y - 1);
-						cntr = ++cntr % rotate.Length;
-					}
-					Thread.Sleep(200);
-				}
-
-				await (task as Task); // Necessary?
-				(task as IDisposable).Dispose();
-			}
-
-			Console.CursorVisible = true;
-		}
-
-#warning Refactor: static async Task InteractiveMode()
 		/// <summary>
 		/// Method handling the "Interactive mode". 
 		/// Will query user for information.
@@ -143,22 +112,7 @@ namespace NOVO
 			var user_input = Console.ReadLine().Trim(ParserOptions.TrimChars);
 			var user_path = Path.GetFullPath(user_input);
 
-			DRS4FileData data = null;
-
-			try
-			{
-				DRS4FileParser parser = null;
-				using var fileHandler = File.Open(user_path, FileMode.Open);
-				parser = DRS4FileParser.NewParser(fileHandler);
-				if (parser.Validate())
-				{
-					data = await parser.ParseAsync();
-				}
-			}
-			catch (Exception ex)
-			{
-				Console.Error.WriteLine(ex.ToString());
-			}
+			DRS4FileData data = await ReadFile(user_path);
 
 			if (data != null)
 			{
@@ -181,64 +135,9 @@ namespace NOVO
 				Console.WriteLine("-------------------------------------------");
 			}
 
-			try
-			{
-				Console.Write("Creating data directory... ");
-				Directory.CreateDirectory(
-					Path.Combine(
-						Path.GetDirectoryName(user_path),
-						$"{Path.GetFileNameWithoutExtension(user_path)}_data"
-						)
-					);
-				Console.WriteLine("Done");
-
-			}
-			catch (Exception ex)
-			{
-				Console.WriteLine("Failed\nReason: {0}", ex.Message);
-				Console.Error.WriteLine(ex);
-			}
-			finally
-			{
-				Console.WriteLine("-------------------------------------------");
-			}
-
-			List<IAsyncResult> tskWorker = new();
-			foreach (WaveformEvent waveformEvent in Waves)
-			{
-				tskWorker.Add(Task.Run(async () =>
-				{
-					try
-					{
-						string[] fileString = await waveformEvent.ToCSVAsync(0.1);
-						string fileName = $"DRS4_{waveformEvent.BoardNumber}_{waveformEvent.EventDateTime.ToString("yyyy-MM-dd_HHmmssffff")}_{waveformEvent.SerialNumber}.csv";
-
-						using var SW = new StreamWriter(
-							path: Path.GetFullPath(
-								Path.Combine(
-									Path.GetDirectoryName(user_path),
-									$"{Path.GetFileNameWithoutExtension(user_path)}_data",
-									fileName
-									)
-								),
-							append: false,
-							encoding: Encoding.UTF8
-							);
-
-						foreach (string str in fileString)
-						{
-							SW.WriteLine(str);
-						}
-						// Console.Out.WriteLine("Exported file: {0}", fileName);
-					}
-					catch (Exception ex)
-					{
-						Console.Error.WriteLine("Thread {0} - ID: {1}\n{2}", Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex);
-					}
-				}));
-			}
-
-			//await PendingOperationMessage("Processing...", tskWorker);
+			using Task tskTemp = Task.Run(() => RunWorkers(user_path,Waves));
+			PendingOperationMessage("Processing...", tskTemp);
+			await tskTemp;
 		}
 
 		/// <summary>
@@ -276,16 +175,15 @@ namespace NOVO
 				Console.WriteLine($"{file}\nExcluded {temp} event{((temp > 1)? "s": string.Empty)} due to ADC saturation\n");
 			}
 
-			using Task worker = GetWorkers(targetPath, Waves);
+			RunWorkers(targetPath, Waves);
 		}
 
 		/// <summary>
-		/// Method handling the creation of Task objects responsible for file operations.
+		/// Method handling the creation and execution of Task objects responsible for file operations.
 		/// </summary>
 		/// <param name="targetPath">Path to target directory or target Zip archive</param>
 		/// <param name="Waves">Data collection</param>
-		/// <returns>Array of Task objects handling async file operations.</returns>
-		static Task GetWorkers(string targetPath,List<WaveformEvent> Waves)
+		static void RunWorkers(string targetPath,List<WaveformEvent> Waves)
 		{
 			List<Task> tskWorker = new();
 			try
@@ -319,7 +217,6 @@ namespace NOVO
 				Console.Out.WriteLine("Operation failed \nReason: {0}", ex.Message);
 				Console.Error.WriteLine(ex);
 			}
-			return Task.CompletedTask;
 		}
 
 		/// <summary>

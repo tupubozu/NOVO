@@ -35,7 +35,7 @@ namespace NOVO.Waveform
 				PercentDecimalSeparator = "."
 			};
 
-			relativeThresholdVoltage = 499.98;
+			relativeThresholdVoltage = 499.92;
 			trimOffset = 15;
 		}
 
