@@ -23,7 +23,7 @@ namespace NOVO
 			ParserOptions.SetOptions(args);
 			List<string> binaryFiles = ParserOptions.GetFiles(args);
 
-			Console.WriteLine("NovoParser v2.2.0"); // NOVO-project DRS4 binary file parser/reader
+			Console.WriteLine("NovoParser v2.2.1"); // NOVO-project DRS4 binary file parser/reader
 
 			if (ParserOptions.HelpText)
 			{

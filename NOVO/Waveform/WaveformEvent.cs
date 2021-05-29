@@ -175,7 +175,7 @@ namespace NOVO.Waveform
 
 			for (int j = 0; j < Channels.Count; j++)
 			{
-				output_str += $"\"Channel {j + 1}\"";
+				output_str += $"\"Channel {Channels[j].ChannelNumber}\"";
 				if (!(j >= Channels.Count)) output_str += ",";
 			}
 			output_str += "\n";
@@ -216,7 +216,7 @@ namespace NOVO.Waveform
 				string output_str = "\"Time\",";
 				for (int j = 0; j < Channels.Count; j++)
 				{
-					output_str += $"\"Channel {j + 1}\"";
+					output_str += $"\"Channel {Channels[j].ChannelNumber}\"";
 					if (j < (Channels.Count - 1)) output_str += ",";
 				}
 				return output_str;
@@ -278,7 +278,7 @@ namespace NOVO.Waveform
 			  string output_str = "\"Time\",";
 			  for (int j = 0; j < Channels.Count; j++)
 			  {
-				  output_str += $"\"Channel {j + 1}\"";
+				  output_str += $"\"Channel {Channels[j].ChannelNumber}\"";
 				  if (j < (Channels.Count - 1)) output_str += ",";
 			  }
 			  return output_str;
