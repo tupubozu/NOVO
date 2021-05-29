@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "NOVO": {
-      "commandName": "Project",
-      "commandLineArgs": "--exclude=true"
-    }
-  }
-}

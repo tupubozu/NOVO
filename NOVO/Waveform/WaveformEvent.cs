@@ -57,10 +57,10 @@ namespace NOVO.Waveform
 			}
 		}
 
-		public void Trim()
+		public void Trim(bool trimStart = true, bool trimEnd = true)
 		{
-			TrimStart();
-			TrimEnd();
+			if (trimStart) TrimStart();
+			if (trimEnd) TrimEnd();
 		}
 		public void TrimStart()
 		{
@@ -186,7 +186,7 @@ namespace NOVO.Waveform
 				string temp_str = string.Format("\"{0}\",", i.ToString(numberFormat));
 				for (int j = 0; j < Channels.Count; j++)
 				{
-					temp_str += string.Format("\"{0}\"", Channels[j].Regression(i).ToString(numberFormat));
+					temp_str += string.Format("\"{0}\"", Channels[j].Interpolate(i).ToString(numberFormat));
 					if (j < (Channels.Count - 1)) temp_str += ",";
 				}
 				temp_str += "\n";
@@ -195,6 +195,59 @@ namespace NOVO.Waveform
 			}
 
 			return output_str;
+		}
+
+		public async Task<string[]> ToCSVAsync()
+		{
+			SortedSet<double> times = new();
+
+			foreach (var channel in Channels)
+			{
+				foreach (var sample in channel.Samples)
+				{
+					times.Add(sample.TimeComponent);
+				}
+			}
+
+			List<Task<string>> tskOutput = new();
+
+			tskOutput.Add(Task.Run(() =>
+			{
+				string output_str = "\"Time\",";
+				for (int j = 0; j < Channels.Count; j++)
+				{
+					output_str += $"\"Channel {j + 1}\"";
+					if (j < (Channels.Count - 1)) output_str += ",";
+				}
+				return output_str;
+			}));
+
+			foreach (double time in times)
+			{
+				double alias_i = time;
+
+				tskOutput.Add(Task.Run(() =>
+				{
+					string temp_str = string.Format("\"{0}\",", alias_i.ToString(numberFormat));
+
+					for (int j = 0; j < Channels.Count; j++)
+					{
+						temp_str += string.Format("\"{0}\"", Channels[j].Interpolate(alias_i).ToString(numberFormat));
+						if (j < (Channels.Count - 1)) temp_str += ",";
+					}
+					return temp_str;
+				}));
+			}
+
+			string[] output = new string[tskOutput.Count];
+
+			for (int i = 0; i < output.Length; i++)
+			{
+				output[i] = await tskOutput[i];
+				tskOutput[i].Dispose();
+			}
+
+			return output;
 		}
 
 		public async Task<string[]> ToCSVAsync(double sample_time)
@@ -243,7 +296,7 @@ namespace NOVO.Waveform
 
 					for (int j = 0; j < Channels.Count; j++)
 					{
-						temp_str += string.Format("\"{0}\"", Channels[j].Regression(alias_i).ToString(numberFormat));
+						temp_str += string.Format("\"{0}\"", Channels[j].Interpolate(alias_i).ToString(numberFormat));
 						if (j < (Channels.Count - 1)) temp_str += ",";
 					}
 					return temp_str;

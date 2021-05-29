@@ -23,11 +23,11 @@ namespace NOVO
 			ParserOptions.SetOptions(args);
 			List<string> binaryFiles = ParserOptions.GetFiles(args);
 
-			
-			
+			Console.WriteLine("NovoParser v2.2.0"); // NOVO-project DRS4 binary file parser/reader
+
 			if (ParserOptions.HelpText)
 			{
-				Console.WriteLine("NOVO-project DRS4 binary file parser/reader \nUsage: [options] [files]");
+				Console.WriteLine("Usage: [options] [files]");
 			}
 			else if (ParserOptions.Interactive)
 			{
@@ -36,7 +36,6 @@ namespace NOVO
 			}
 			else
 			{
-				Console.WriteLine("NOVO-project DRS4 binary file parser/reader");
 				if (binaryFiles.Count > 0)
 				{
 
@@ -296,7 +295,7 @@ namespace NOVO
 		{
 			try
 			{
-				Task<string[]> tskFileString = waveformEvent.ToCSVAsync(0.1);
+				Task<string[]> tskFileString = ParserOptions.RegularTime? waveformEvent.ToCSVAsync(ParserOptions.RegularTimeInterval): waveformEvent.ToCSVAsync();
 
 				string fileName = $"DRS4_{waveformEvent.BoardNumber}_{waveformEvent.EventDateTime.ToString("yyyy-MM-dd_HHmmssffff")}_{waveformEvent.SerialNumber}.csv";
 

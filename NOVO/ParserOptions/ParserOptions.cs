@@ -13,17 +13,22 @@ namespace NOVO
 	static class ParserOptions
 	{
 		public static bool Trim { get; private set; }
+		public static bool TrimEnd { get; private set; }
 		public static bool Exclude { get; private set; }
 		public static bool ZipOutput { get; private set; }
 		public static bool HelpText { get; private set; }
-
+		public static bool RegularTime { get; private set; }
 		public static bool Interactive { get; private set; }
 		public static double ThresholdVoltage { get; private set; }
+		public static double RegularTimeInterval { get; private set; }
 
 		public static readonly char[] TrimChars = { ' ', '\t', '\n', '\"', '\'' };
 		static ParserOptions()
 		{
 			(Trim, Exclude, ZipOutput, HelpText, Interactive) = (true, true, true, false, false);
+			TrimEnd = false;
+			RegularTime = false;
+			RegularTimeInterval = 0.1;
 			ThresholdVoltage = 50.0;
 		}
 
@@ -43,13 +48,25 @@ namespace NOVO
 				{
 					Trim = GetArgsBool(arg.Split('=')[1], Trim);
 				}
+				else if (arg.Contains("--trim-end="))
+				{
+					TrimEnd = GetArgsBool(arg.Split('=')[1], TrimEnd);
+				}
 				else if (arg.Contains("--zip="))
 				{
 					ZipOutput = GetArgsBool(arg.Split('=')[1], ZipOutput);
 				}
+				else if (arg.Contains("--reg-time="))
+				{
+					RegularTime = GetArgsBool(arg.Split('=')[1], RegularTime);
+				}
 				else if (arg.Contains("--threshold="))
 				{
 					ThresholdVoltage = GetArgsDouble(arg.Split('=')[1], ThresholdVoltage);
+				}
+				else if (arg.Contains("--reg-time-interval="))
+				{
+					RegularTimeInterval = GetArgsDouble(arg.Split('=')[1], RegularTimeInterval);
 				}
 				else if (arg.Contains("-i"))
 				{
