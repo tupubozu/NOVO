@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DRS4\NovoParser.DRS4.csproj" />
+    <ProjectReference Include="..\NovoParser.DRS4\NovoParser.DRS4.csproj" />
   </ItemGroup>
 
 </Project>
