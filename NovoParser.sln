@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32210.238
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NovoParser.CLI", "NovoParser.CLI\NovoParser.CLI.csproj", "{B3E03CBB-B352-40CC-89C1-078B817EDA31}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NovoParser.CLI", "src\NovoParser.CLI\NovoParser.CLI.csproj", "{B3E03CBB-B352-40CC-89C1-078B817EDA31}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovoParser.Waveform", "NovoParser.Waveform\NovoParser.Waveform.csproj", "{DA0E12FC-E923-4941-AF26-B6A103A0BD4E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovoParser.Waveform", "src\NovoParser.Waveform\NovoParser.Waveform.csproj", "{DA0E12FC-E923-4941-AF26-B6A103A0BD4E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovoParser.ParserOptions", "NovoParser.ParserOptions\NovoParser.ParserOptions.csproj", "{DBC2DB8C-420E-4677-8B31-5B2A5D5842E1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovoParser.ParserOptions", "src\NovoParser.ParserOptions\NovoParser.ParserOptions.csproj", "{DBC2DB8C-420E-4677-8B31-5B2A5D5842E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovoParser.DRS4", "NovoParser.DRS4\NovoParser.DRS4.csproj", "{251CD4A5-E210-436A-A141-390D0A5F0957}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovoParser.DRS4", "src\NovoParser.DRS4\NovoParser.DRS4.csproj", "{251CD4A5-E210-436A-A141-390D0A5F0957}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
