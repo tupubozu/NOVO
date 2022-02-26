@@ -1,15 +1,14 @@
 ﻿using NovoParser.Waveform;
 using NovoParser.ParserOptions;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace NovoParser.DRS4
 {
-	/// <summary>
-	/// DRS4FileData is a 1 to 1 representation of the binary file made by a DRS4 board.
-	/// </summary>
-	public class DRS4FileData
+    /// <summary>
+    /// DRS4FileData is a 1 to 1 representation of the binary file made by a DRS4 board.
+    /// </summary>
+    public class DRS4FileData
 	{
 		public byte Version;
 		public DRS4Time Time;
@@ -140,49 +139,5 @@ namespace NovoParser.DRS4
 
 			return waveformEvent;
 		}
-	}
-
-	/// <summary>
-	/// DRS4Time is a representation of the data found in/after the "TIME"-header inside a DRS4 binary file.
-	/// </summary>
-	public class DRS4Time
-	{
-		public ushort BoardNumber;
-		public List<DRS4TimeData> TimeData;
-	}
-
-	/// <summary>
-	/// DRS4TimeData a representation of the channel spesific information found after the "TIME"-header inside a DRS4 binary file.
-	/// </summary>
-	public class DRS4TimeData
-	{
-		public byte ChannelNumber;
-		public float[] Data;
-	}
-
-	/// <summary>
-	/// DRS4Event is a representation of the data found in/after an "EHDR"-header inside a DRS4 binary file.
-	/// </summary>
-	public class DRS4Event
-	{
-		public uint EventSerialNumber;
-
-		public DateTime EventTime;
-
-		public short RangeCenter;
-		public ushort BoardNumber;
-		public ushort TriggerCell;
-
-		public List<DRS4EventData> EventData;
-	}
-
-	/// <summary>
-	/// DRS4EventData a representation of the channel spesific information found after the "EHDR"-header inside a DRS4 binary file.
-	/// </summary>
-	public class DRS4EventData
-	{
-		public byte ChannelNumber;
-		public int Scaler;
-		public ushort[] Voltage;
 	}
 }
