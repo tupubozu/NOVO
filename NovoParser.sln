@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovoParser.Waveform", "Novo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovoParser.ParserOptions", "NovoParser.ParserOptions\NovoParser.ParserOptions.csproj", "{DBC2DB8C-420E-4677-8B31-5B2A5D5842E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovoParser.DRS4", "DRS4\NovoParser.DRS4.csproj", "{251CD4A5-E210-436A-A141-390D0A5F0957}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NovoParser.DRS4", "NovoParser.DRS4\NovoParser.DRS4.csproj", "{251CD4A5-E210-436A-A141-390D0A5F0957}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
