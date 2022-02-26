@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace NOVO.Waveform
+namespace NovoParser.Waveform
 {
 
 	/// <summary>
@@ -32,7 +32,7 @@ namespace NOVO.Waveform
 
 		public double Interpolate(double time)
 		{
-			WaveformSample sample1 = new(), sample2 = new();
+			WaveformSample sample1 = new WaveformSample(), sample2 = new WaveformSample();
 			for (int i = 0; i < Samples.Count - 1; i++)
 			{
 				if (time >= Samples[i].TimeComponent && time <= Samples[i + 1].TimeComponent)
@@ -58,9 +58,9 @@ namespace NOVO.Waveform
 		public double TimeComponent
 		{
 			get => timeComponent;
-			init => timeComponent = value;
+			private set => timeComponent = value;
 		}
-		public double VoltageComponent { get; init; }
+		public double VoltageComponent { get; private set; }
 
 		public WaveformSample() : this(0.0, 0.0) { }
 		public WaveformSample(double time, double voltage) => (TimeComponent, VoltageComponent) = (time, voltage);

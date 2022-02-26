@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
+using NovoParser.ParserOptions;
 
-namespace NOVO.Waveform
+namespace NovoParser.Waveform
 {
 	/// <summary>
 	/// WaveformEvent is a high level abstraction of the DRS4Event and DRS4Time objects.
@@ -28,7 +29,7 @@ namespace NOVO.Waveform
 
 		static WaveformEvent()
 		{
-			numberFormat = new()
+			numberFormat = new NumberFormatInfo()
 			{
 				CurrencyDecimalSeparator = ".",
 				NumberDecimalSeparator = ".",
@@ -85,7 +86,7 @@ namespace NOVO.Waveform
 					temp_next += channel.Samples[j].VoltageComponent;
 				}
 
-				if ((Math.Abs(temp_next / trimOffset) > Math.Abs(temp_prev / trimOffset)) && (Math.Abs(channel.Samples[i].VoltageComponent) >= ParserOptions.ThresholdVoltage))
+				if ((Math.Abs(temp_next / trimOffset) > Math.Abs(temp_prev / trimOffset)) && (Math.Abs(channel.Samples[i].VoltageComponent) >= Options.ThresholdVoltage))
 				{
 					if (i - trimOffset > 0) channel.Samples.RemoveRange(0, i - trimOffset);
 					return;
@@ -114,7 +115,7 @@ namespace NOVO.Waveform
 					temp_next += channel.Samples[j].VoltageComponent;
 				}
 
-				if ((Math.Abs(temp_next / trimOffset) > Math.Abs(temp_prev / trimOffset)) && (Math.Abs(channel.Samples[i].VoltageComponent) >= ParserOptions.ThresholdVoltage))
+				if ((Math.Abs(temp_next / trimOffset) > Math.Abs(temp_prev / trimOffset)) && (Math.Abs(channel.Samples[i].VoltageComponent) >= Options.ThresholdVoltage))
 				{
 					channel.Samples.RemoveRange(i + trimOffset, channel.Samples.Count - (i + trimOffset) - 1);
 					return;
@@ -199,7 +200,7 @@ namespace NOVO.Waveform
 
 		public async Task<string[]> ToCSVAsync()
 		{
-			SortedSet<double> times = new();
+			SortedSet<double> times = new SortedSet<double>();
 
 			foreach (var channel in Channels)
 			{
@@ -209,7 +210,7 @@ namespace NOVO.Waveform
 				}
 			}
 
-			List<Task<string>> tskOutput = new();
+			List<Task<string>> tskOutput = new List<Task<string>>();
 
 			tskOutput.Add(Task.Run(() =>
 			{
@@ -271,7 +272,7 @@ namespace NOVO.Waveform
 		{
 			int digits = (int)Math.Round(Math.Abs(Math.Log10(sample_time)) + 0.5, 0);
 
-			List<Task<string>> tskOutput = new();
+			List<Task<string>> tskOutput = new List<Task<string>>();
 
 			tskOutput.Add(Task.Run(() =>
 		  {

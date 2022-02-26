@@ -1,5 +1,6 @@
-﻿using NOVO.DRS4File;
-using NOVO.Waveform;
+﻿using NovoParser.DRS4;
+using NovoParser.Waveform;
+using NovoParser.ParserOptions;
 
 using System;
 using System.Collections.Generic;
@@ -20,16 +21,16 @@ namespace NOVO
 		/// <returns></returns>
 		static async Task Main(string[] args)
 		{
-			ParserOptions.SetOptions(args);
-			List<string> binaryFiles = ParserOptions.GetFiles(args);
+			Options.SetOptions(args);
+			List<string> binaryFiles = Options.GetFiles(args);
 
 			Console.WriteLine("NovoParser v2.2.1"); // NOVO-project DRS4 binary file parser/reader
 
-			if (ParserOptions.HelpText)
+			if (Options.HelpText)
 			{
 				Console.WriteLine("Usage: [options] [files]");
 			}
-			else if (ParserOptions.Interactive)
+			else if (Options.Interactive)
 			{
 				using Task tskProcess = InteractiveMode();
 				await tskProcess;
@@ -108,7 +109,7 @@ namespace NOVO
 			Console.WriteLine("-------------------------------------------");
 
 			Console.Write("Path to file: ");
-			var user_input = Console.ReadLine().Trim(ParserOptions.TrimChars);
+			var user_input = Console.ReadLine().Trim(Options.TrimChars);
 			var user_path = Path.GetFullPath(user_input);
 
 			DRS4FileData data = await ReadFile(user_path);
@@ -157,7 +158,7 @@ namespace NOVO
 			Task<List<WaveformEvent>> tskWaves = data.ToWaveformEventsAsync();
 			//List<WaveformEvent> Waves = data.ToWaveformEvents();
 
-			string targetPath = ParserOptions.ZipOutput?
+			string targetPath = Options.ZipOutput?
 				Path.Combine(
 				Path.GetDirectoryName(file),
 				$"{Path.GetFileNameWithoutExtension(file)}_data.zip"
@@ -187,7 +188,7 @@ namespace NOVO
 			List<Task> tskWorker = new();
 			try
 			{
-				if (!ParserOptions.ZipOutput)
+				if (!Options.ZipOutput)
 				{
 					Directory.CreateDirectory(targetPath);
 					foreach (WaveformEvent waveformEvent in Waves)
@@ -295,7 +296,7 @@ namespace NOVO
 		{
 			try
 			{
-				Task<string[]> tskFileString = ParserOptions.RegularTime? waveformEvent.ToCSVAsync(ParserOptions.RegularTimeInterval): waveformEvent.ToCSVAsync();
+				Task<string[]> tskFileString = Options.RegularTime? waveformEvent.ToCSVAsync(Options.RegularTimeInterval): waveformEvent.ToCSVAsync();
 
 				string fileName = $"DRS4_{waveformEvent.BoardNumber}_{waveformEvent.EventDateTime.ToString("yyyy-MM-dd_HHmmssffff")}_{waveformEvent.SerialNumber}.csv";
 

@@ -4,7 +4,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace NOVO.DRS4File
+namespace NovoParser.DRS4
 {
 	public class DRS4FileParser
 	{
@@ -50,7 +50,7 @@ namespace NOVO.DRS4File
 
 		public async Task<DRS4FileData> ParseAsync()
 		{
-			DRS4FileData Data = new();
+			DRS4FileData Data = new DRS4FileData();
 			{
 				long temp_pos = file.Position;
 				file.Position = 3;
@@ -91,9 +91,9 @@ namespace NOVO.DRS4File
 			}
 
 			// Preparation and async excecution of parser functions for DRS4Event objects. 
-			List<Task<DRS4Event>> tskEventData = new();
+			List<Task<DRS4Event>> tskEventData = new List<Task<DRS4Event>>();
 			{
-				List<long> eventPos = new();
+				List<long> eventPos = new List<long>();
 				foreach (var item in DRS4FileFlagDict)
 				{
 					if (item.Value == DRS4FileFlag.Event)
@@ -117,7 +117,7 @@ namespace NOVO.DRS4File
 			Data.Time = await tskTimeData;
 
 			// Await results of DRS4Event object parsing
-			List<DRS4Event> events = new();
+			List<DRS4Event> events = new List<DRS4Event>();
 			for (int i = 0; i < tskEventData.Count; i++)
 			{
 				events.Add(await tskEventData[i]);
@@ -135,16 +135,16 @@ namespace NOVO.DRS4File
 		/// <returns>DRS4 binary data as a DRS4Time</returns>
 		private DRS4Time ParseTime(byte[] data)
 		{
-			DRS4Time time = new()
+			DRS4Time time = new DRS4Time()
 			{
 				BoardNumber = BitConverter.ToUInt16(data, 2),
-				TimeData = new()
+				TimeData = new List<DRS4TimeData>()
 			};
 
 			for (int i = 4; i < data.Length; i += 1025 * 4)
 			{
 				int ii = i;
-				DRS4TimeData timeData = new();
+				DRS4TimeData timeData = new DRS4TimeData();
 				{
 					byte[] byte_channel_num = { data[ii + 1], data[ii + 2], data[ii + 3] };
 					string channel = $"{Convert.ToChar(byte_channel_num[0])}{Convert.ToChar(byte_channel_num[1])}{Convert.ToChar(byte_channel_num[2])}";
@@ -176,10 +176,10 @@ namespace NOVO.DRS4File
 		/// <returns>DRS4 binary data as a DRS4Event</returns>
 		private DRS4Event ParseEvent(byte[] data) 
 		{
-			DRS4Event @event = new()
+			DRS4Event @event = new DRS4Event()
 			{
 				EventSerialNumber = BitConverter.ToUInt32(data, 0),
-				EventTime = new(
+				EventTime = new DateTime(
 					year: BitConverter.ToUInt16(data, 4),
 					month: BitConverter.ToUInt16(data, 6),
 					day: BitConverter.ToUInt16(data, 8),
@@ -191,13 +191,13 @@ namespace NOVO.DRS4File
 				RangeCenter = BitConverter.ToInt16(data, 18),
 				BoardNumber = BitConverter.ToUInt16(data, 22),
 				TriggerCell = BitConverter.ToUInt16(data, 26),
-				EventData = new()
+				EventData = new List<DRS4EventData>()
 			};
 
 			for (int i = 28; i < data.Length; i += (512 + 2) * 4)
 			{
 				int ii = i;
-				DRS4EventData eventData = new();
+				DRS4EventData eventData = new DRS4EventData();
 				{
 					byte[] byte_channel_num = { data[ii + 1], data[ii + 2], data[ii + 3] };
 					string channel = $"{Convert.ToChar(byte_channel_num[0])}{Convert.ToChar(byte_channel_num[1])}{Convert.ToChar(byte_channel_num[2])}";

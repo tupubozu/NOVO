@@ -1,9 +1,10 @@
-﻿using NOVO.Waveform;
+﻿using NovoParser.Waveform;
+using NovoParser.ParserOptions;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace NOVO.DRS4File
+namespace NovoParser.DRS4
 {
 	/// <summary>
 	/// DRS4FileData is a 1 to 1 representation of the binary file made by a DRS4 board.
@@ -16,7 +17,7 @@ namespace NOVO.DRS4File
 
 		public override string ToString()
 		{
-			string output = string.Join('\n',
+			string output = string.Join("\n",
 				base.ToString(),
 				string.Format("\tFile version: {0}", this.Version),
 				string.Format("\tBoard number: {0}", this.Time.BoardNumber),
@@ -27,7 +28,7 @@ namespace NOVO.DRS4File
 
 		public List<WaveformEvent> ToWaveformEvents()
 		{
-			List<WaveformEvent> output = new();
+			List<WaveformEvent> output = new List<WaveformEvent>();
 
 			foreach (DRS4Event event_item in this.Events)
 			{
@@ -48,26 +49,26 @@ namespace NOVO.DRS4File
 
 		public async Task<List<WaveformEvent>> ToWaveformEventsAsync()
 		{
-			List<Task<WaveformEvent>> tskOutput = new();
+			List<Task<WaveformEvent>> tskOutput = new List<Task<WaveformEvent>>();
 			foreach (DRS4Event event_item in this.Events)
 			{
 				if (event_item.BoardNumber == this.Time.BoardNumber)
 					tskOutput.Add(Task.Run(() => ToWaveformEvent(event_item, this.Time)));
 			}
 
-			List<WaveformEvent> output = new();
+			List<WaveformEvent> output = new List<WaveformEvent>();
 			foreach (Task<WaveformEvent> worker in tskOutput)
 			{
 				output.Add(await worker);
 				worker.Dispose();
 			}
 
-			List<WaveformEvent> removeableEvents = new();
+			List<WaveformEvent> removeableEvents = new List<WaveformEvent>();
 			foreach (WaveformEvent item in output)
 			{
 				item.NormalizeTime();
-				if (ParserOptions.Trim) item.Trim(trimEnd: ParserOptions.TrimEnd);
-				if (item.IsOutOfRange && ParserOptions.Exclude)
+				if (Options.Trim) item.Trim(trimEnd: Options.TrimEnd);
+				if (item.IsOutOfRange && Options.Exclude)
 					removeableEvents.Add(item);
 			}
 
@@ -82,22 +83,22 @@ namespace NOVO.DRS4File
 
 		private WaveformEvent ToWaveformEvent(DRS4Event e, DRS4Time t)
 		{
-			WaveformEvent waveformEvent = new()
+			WaveformEvent waveformEvent = new WaveformEvent()
 			{
 				EventDateTime = e.EventTime,
 				BoardNumber = t.BoardNumber,
 				SerialNumber = e.EventSerialNumber,
 				RangeCenter = e.RangeCenter,
 				TriggerCell = e.TriggerCell,
-				Channels = new()
+				Channels = new List<WaveformData>()
 			};
 
 			foreach (DRS4EventData ed in e.EventData)
 			{
-				WaveformData temp = new()
+				WaveformData temp = new WaveformData()
 				{
 					ChannelNumber = ed.ChannelNumber,
-					Samples = new()
+					Samples = new List<WaveformSample>()
 				};
 
 				for (int i = 0; i < ed.Voltage.Length; i++)
@@ -132,7 +133,7 @@ namespace NOVO.DRS4File
 						timeComponent += temp_time_data.Data[(j + e.TriggerCell) % temp_time_data.Data.Length];
 					}
 
-					temp.Samples.Add(new(timeComponent, ((1000.0 * ed.Voltage[i]) / ushort.MaxValue) - 500 + e.RangeCenter));
+					temp.Samples.Add(new WaveformSample(timeComponent, ((1000.0 * ed.Voltage[i]) / ushort.MaxValue) - 500 + e.RangeCenter));
 				}
 				waveformEvent.Channels.Add(temp);
 			}

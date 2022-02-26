@@ -5,4 +5,8 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\DRS4\NovoParser.DRS4.csproj" />
+  </ItemGroup>
+
 </Project>

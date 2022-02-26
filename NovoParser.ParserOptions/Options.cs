@@ -5,12 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NOVO
+namespace NovoParser.ParserOptions
 {
 	/// <summary>
 	/// Class to contain program flags and program argument parsing methods
 	/// </summary>
-	static class ParserOptions
+	public static class Options
 	{
 		public static bool Trim { get; private set; }
 		public static bool TrimEnd { get; private set; }
@@ -23,7 +23,7 @@ namespace NOVO
 		public static double RegularTimeInterval { get; private set; }
 
 		public static readonly char[] TrimChars = { ' ', '\t', '\n', '\"', '\'' };
-		static ParserOptions()
+		static Options()
 		{
 			(Trim, Exclude, ZipOutput, HelpText, Interactive) = (true, true, true, false, false);
 			TrimEnd = false;
@@ -126,7 +126,7 @@ namespace NOVO
 		/// <returns>List of paths</returns>
 		public static List<string> GetFiles(string[] args)
 		{
-			List<string> temp = new();
+			List<string> temp = new List<string>();
 			foreach (string arg in args)
 			{
 				if (File.Exists(arg)) 
