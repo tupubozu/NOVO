@@ -1,5 +1,6 @@
 # NOVO
 Repository for NOVO-project @ HVL
+
 Contains the (maintained) programs used for bachelor thesis "BO21E-29 NOVO SIGNALPROSESSERING AND REVERSE ENGINEERING" (https://hdl.handle.net/11250/2774935)
 
 ## NovoParser
