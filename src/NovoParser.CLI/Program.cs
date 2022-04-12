@@ -24,7 +24,8 @@ namespace NOVO
 			Options.SetOptions(args);
 			List<string> binaryFiles = Options.GetFiles(args);
 
-			Console.WriteLine("NovoParser v2.2.2"); // NOVO-project DRS4 binary file parser/reader
+			var assemblyName = typeof(Program).Assembly.GetName();
+			Console.WriteLine("{0} version {1}", assemblyName.Name, assemblyName.Version); // NOVO-project DRS4 binary file parser/reader
 
 			if (Options.HelpText)
 			{

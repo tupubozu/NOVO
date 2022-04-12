@@ -3,6 +3,14 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
+	  <RepositoryUrl>https://github.com/tupubozu/NOVO</RepositoryUrl>
+	<RepositoryType>git</RepositoryType>
+	<AssemblyVersion>2.2.2.*</AssemblyVersion>
+	<Deterministic>false</Deterministic>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<Authors>tupubozu</Authors>
+    <AssemblyName>$(MSBuildProjectName.Replace(".CLI", ""))</AssemblyName>
+    <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
   </PropertyGroup>
 
   <ItemGroup>
