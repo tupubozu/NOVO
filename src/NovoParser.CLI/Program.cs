@@ -9,6 +9,7 @@ using System.IO.Compression;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using NovoParser.CLI.UserInterface;
 
 namespace NOVO
 {
@@ -25,11 +26,11 @@ namespace NOVO
 			List<string> binaryFiles = Options.GetFiles(args);
 
 			var assemblyName = typeof(Program).Assembly.GetName();
-			Console.WriteLine("{0} version {1}", assemblyName.Name, assemblyName.Version); // NOVO-project DRS4 binary file parser/reader
+			Console.WriteLine(UIStrings.ProgramNameVersionReport, assemblyName.Name, assemblyName.Version); // NOVO-project DRS4 binary file parser/reader
 
 			if (Options.HelpText)
 			{
-				Console.WriteLine("Usage: [options] [files]");
+				Console.WriteLine(UIStrings.HelpText);
 			}
 			else if (Options.Interactive)
 			{
@@ -49,7 +50,7 @@ namespace NOVO
 					}
 
 					using Task tskProcess = Task.WhenAll(workers.ToArray());
-					PendingOperationMessage("Processing...", tskProcess);
+					PendingOperationMessage(UIStrings.ProcessingIdleText, tskProcess);
 					await tskProcess;
 
 					foreach (Task worker in workers)
@@ -60,13 +61,14 @@ namespace NOVO
 				}
 				else
 				{
-					Console.WriteLine("No files specified. Please pass at least one file path as an argument.\nSee --help for help.");
+					Console.WriteLine(UIStrings.NoFilesErrorText);
 				}
 				
 			}
 
 #if DEBUG
-			Console.WriteLine("\n-------------------------------------------\nEnd of program");
+			Console.WriteLine(UIStrings.SeparatorLineText);
+			Console.WriteLine(UIStrings.ProgramEndText);
 			Console.ReadKey(true);
 #endif
 		}
@@ -82,7 +84,8 @@ namespace NOVO
 			string[] rotate = { @"(-)", @"(\)", @"(|)", @"(/)" };
 			int cntr = 0;
 
-			while (!task.IsCompleted)
+			bool loopEnd = task.IsCompleted;
+			while (!loopEnd)
 			{
 				lock (Console.Out)
 				{
@@ -92,6 +95,13 @@ namespace NOVO
 					(int x, int y) = Console.GetCursorPosition();
 					Console.SetCursorPosition(0, y - 1);
 					cntr = ++cntr % rotate.Length;
+
+					loopEnd = task.IsCompleted;
+					if (loopEnd)
+					{
+						Console.SetCursorPosition(message.Length + 1, y);
+						Console.WriteLine(UIStrings.JobDoneText);
+					}
 				}
 				Thread.Sleep(200);
 			}
@@ -106,10 +116,10 @@ namespace NOVO
 		/// <returns></returns>
 		static async Task InteractiveMode()
 		{
-			Console.WriteLine("NOVO-project DRS4 binary file parser/reader");
-			Console.WriteLine("-------------------------------------------");
+			Console.WriteLine(UIStrings.ProgramExplainationText);
+			Console.WriteLine(UIStrings.SeparatorLineText);
 
-			Console.Write("Path to file: ");
+			Console.Write(UIStrings.FilePathUserQueryText);
 			var user_input = Console.ReadLine().Trim(Options.TrimChars);
 			var user_path = Path.GetFullPath(user_input);
 
@@ -117,27 +127,28 @@ namespace NOVO
 
 			if (data != null)
 			{
-				Console.WriteLine("-------------------------------------------");
+				Console.WriteLine(UIStrings.SeparatorLineText);
 				Console.WriteLine(data);
 			}
 
-			Console.WriteLine("-------------------------------------------");
-			Console.Write("Constructing Waveform object... ");
-			List<WaveformEvent> Waves = await data.ToWaveformEventsAsync();
+			Console.WriteLine(UIStrings.SeparatorLineText);
+			var waveOperation = data.ToWaveformEventsAsync();
+			PendingOperationMessage(UIStrings.WaveformCreationText, waveOperation);
+			List<WaveformEvent> Waves = await waveOperation;
 			//List<WaveformEvent> Waves = data.ToWaveformEvents();
-			Console.WriteLine("Done!");
 
-			Console.WriteLine("-------------------------------------------");
+			Console.WriteLine(UIStrings.SeparatorLineText);
 
 			if (data.Events.Count > Waves.Count)
 			{
-				Console.WriteLine("Excluded {0} events due to ADC saturation", data.Events.Count - Waves.Count);
+				int temp = data.Events.Count - Waves.Count;
+				Console.WriteLine(UIStrings.EventADCExclucionReport, temp, temp > 1 ? UIStrings.EventNamePlural : UIStrings.EventNameSingular);
 
-				Console.WriteLine("-------------------------------------------");
+				Console.WriteLine(UIStrings.SeparatorLineText);
 			}
 
 			using Task tskTemp = Task.Run(() => RunWorkers(user_path,Waves));
-			PendingOperationMessage("Processing...", tskTemp);
+			PendingOperationMessage(UIStrings.ProcessingIdleText, tskTemp);
 			await tskTemp;
 		}
 
@@ -161,19 +172,19 @@ namespace NOVO
 
 			string targetPath = Options.ZipOutput?
 				Path.Combine(
-				Path.GetDirectoryName(file),
-				$"{Path.GetFileNameWithoutExtension(file)}_data.zip"
+					Path.GetDirectoryName(file),
+					$"{Path.GetFileNameWithoutExtension(file)}_data.zip"
 				):
 				Path.Combine(
-				Path.GetDirectoryName(file),
-				$"{Path.GetFileNameWithoutExtension(file)}_data"
+					Path.GetDirectoryName(file),
+					$"{Path.GetFileNameWithoutExtension(file)}_data"
 				);
 			
 			List<WaveformEvent> Waves = await tskWaves;
 			if (data.Events.Count > Waves.Count)
 			{
 				int temp = data.Events.Count - Waves.Count;
-				Console.WriteLine($"{file}\nExcluded {temp} event{((temp > 1)? "s": string.Empty)} due to ADC saturation\n");
+				Console.WriteLine("{2}\n" + UIStrings.EventADCExclucionReport + "\n", temp, (temp > 1) ? UIStrings.EventNamePlural : UIStrings.EventNameSingular, file);
 			}
 
 			RunWorkers(targetPath, Waves);
@@ -215,8 +226,10 @@ namespace NOVO
 			}
 			catch (Exception ex)
 			{
-				Console.Out.WriteLine("Operation failed \nReason: {0}", ex.Message);
+				Console.Out.WriteLine(UIStrings.OperationFailedReport, ex.Message);
+#if DEBUG
 				Console.Error.WriteLine(ex);
+#endif
 			}
 		}
 
@@ -279,9 +292,9 @@ namespace NOVO
 			catch (Exception ex)
 			{
 #if DEBUG
-				Console.Error.WriteLine("Thread {0} - ID: {1}\n{2}", Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex);
+				Console.Error.WriteLine(UIStrings.ThreadExceptionReport, Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex);
 #else
-				Console.Error.WriteLine("Thread {0} - ID: {1}\n{2}", Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex.Message);
+				Console.Error.WriteLine(UIStrings.ThreadExceptionReport, Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex.Message);
 #endif
 			}
 		}
@@ -323,9 +336,9 @@ namespace NOVO
 			catch (Exception ex)
 			{
 #if DEBUG
-				Console.Error.WriteLine("Thread {0} - ID: {1}\n{2}", Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex);
+				Console.Error.WriteLine(UIStrings.ThreadExceptionReport, Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex);
 #else
-				Console.Error.WriteLine("Thread {0} - ID: {1}\n{2}", Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex.Message);
+				Console.Error.WriteLine(UIStrings.ThreadExceptionReport, Thread.CurrentThread.Name, Thread.CurrentThread.ManagedThreadId, ex.Message);
 #endif
 			}
 		}
