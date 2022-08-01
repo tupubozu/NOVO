@@ -99,7 +99,7 @@ namespace NOVO
 					loopEnd = task.IsCompleted;
 					if (loopEnd)
 					{
-						Console.SetCursorPosition(message.Length + 1, y);
+						Console.SetCursorPosition(message.Length + 1, y - 1);
 						Console.WriteLine(UIStrings.JobDoneText);
 					}
 				}
